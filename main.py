@@ -1,26 +1,51 @@
+import tensorflow as tf
 from argparse import ArgumentParser
 from Model import AdvAttentionLSTM
 from load_data import load_cla_data
-
 import tensorflow as tf
+from tqdm import tqdm
 
 
 def train(params):
 
-    # criterion = tf.losses.hinge()
-    # optimizer = tf.keras.optimizers.Adam()
-
     tra_pv, tra_wd, tra_gt, val_pv, val_wd, val_gt, tes_pv, tes_wd, tes_gt, \
-        val_gt, tes_pv, tes_wd, tes_gt, feature_dim, latent_dim, alpha, beta, eps, lr = params
+        val_gt, tes_pv, tes_wd, tes_gt, feature_dim, latent_dim, alpha, beta, \
+        eps, lr, batch_size, num_epoch = params
+
+    print(tra_pv.shape)
+
+    train_dataset = tf.data.Dataset.from_tensor_slices((tra_pv, tra_gt))
+    batched_train_dataset = train_dataset.batch(batch_size)
 
     model = AdvAttentionLSTM(
         feature_dim=feature_dim,
         latent_dim=latent_dim
     )
 
-    preds = model(tra_pv)
+    hinge_loss_fn = tf.losses.Hinge()
+    optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=lr)
 
-    print(preds)
+    for epoch in tqdm(range(num_epoch)):
+
+        epoch_loss = 0
+
+        for step, (x_batch_train, y_batch_train) in enumerate(batched_train_dataset):
+            with tf.GradientTape() as tape:
+                predicted_output = model(x_batch_train, training=True)
+                loss_value = hinge_loss_fn(y_batch_train, predicted_output)
+                epoch_loss += loss_value
+
+            gradients = tape.gradient(loss_value, model.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+        print(tf.squeeze(epoch_loss).numpy())
+
+        # # logging
+        # if step % 200 == 0:
+        #     print(
+        #         "Training loss (for one batch) at step %d: %.4f"
+        #         % (step, float(loss_value))
+        #     )
+        # print("Seen so far: %s samples" % ((step + 1) * batch_size))
 
 
 def get_params(args):
@@ -31,6 +56,8 @@ def get_params(args):
     tes_date = '2015-10-01'
 
     data_path = args.path
+    batch_size = args.batch_size
+    num_epoch = args.epoch
     sequence_len = int(args.seq)
     latent_dim = int(args.unit)
     alpha = float(args.alpha_l2)
@@ -47,7 +74,8 @@ def get_params(args):
 
     # TODO: too many parameters, reorganize
     return tra_pv, tra_wd, tra_gt, val_pv, val_wd, val_gt, tes_pv, tes_wd, tes_gt, \
-        val_gt, tes_pv, tes_wd, tes_gt, feature_dim, latent_dim, alpha, beta, eps, lr
+        val_gt, tes_pv, tes_wd, tes_gt, feature_dim, latent_dim, alpha, beta, eps, lr, batch_size, \
+        num_epoch
 
 
 def parse_arguments():

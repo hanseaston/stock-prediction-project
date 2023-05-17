@@ -7,7 +7,7 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
                   date_format='%Y-%m-%d'):
     fnames = [fname for fname in os.listdir(data_path) if
               os.path.isfile(os.path.join(data_path, fname))]
-    print(len(fnames), ' tickers selected')
+    # print(len(fnames), ' tickers selected')
 
     data_EOD = []
     for index, fname in enumerate(fnames):
@@ -24,7 +24,7 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
         delimiter=',', skip_header=False
     )
 
-    print(len(trading_dates), 'trading dates:')
+    # print(len(trading_dates), 'trading dates:')
 
     # transform the trading dates into a dictionary with index, at the same
     # time, transform the indices into a dictionary with weekdays
