@@ -43,8 +43,6 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
     tra_ind = dates_index[tra_date]
     val_ind = dates_index[val_date]
     tes_ind = dates_index[tes_date]
-    print(tra_date, val_date)
-    print(tra_ind, val_ind, tes_ind)
 
     # count training, validation, and testing instances
     tra_num = 0
@@ -57,11 +55,8 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
             continue
         for tic_ind in range(len(fnames)):
             if abs(data_EOD[tic_ind][date_ind][-2]) > 1e-8:
-                print(data_EOD[tic_ind][date_ind][-2])
                 if data_EOD[tic_ind][date_ind - seq: date_ind, :].min() > -123320:
                     tra_num += 1
-
-    print(tra_num, ' training instances')
 
     # validation
     for date_ind in range(val_ind, tes_ind):
@@ -72,7 +67,6 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
             if abs(data_EOD[tic_ind][date_ind][-2]) > 1e-8:
                 if data_EOD[tic_ind][date_ind - seq: date_ind, :].min() > -123320:
                     val_num += 1
-    print(val_num, ' validation instances')
 
     # testing
     for date_ind in range(tes_ind, len(trading_dates)):
@@ -83,7 +77,6 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
             if abs(data_EOD[tic_ind][date_ind][-2]) > 1e-8:
                 if data_EOD[tic_ind][date_ind - seq: date_ind, :].min() > -123320:
                     tes_num += 1
-    print(tes_num, ' testing instances')
 
     # generate training, validation, and testing instances
     # training
@@ -102,8 +95,6 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
                 tra_wd[ins_ind] = data_wd[date_ind - seq: date_ind, :]
                 tra_gt[ins_ind, 0] = (data_EOD[tic_ind][date_ind][-2] + 1) / 2
                 ins_ind += 1
-
-    print(tra_wd)
 
     # validation
     val_pv = np.zeros([val_num, seq, fea_dim], dtype=float)

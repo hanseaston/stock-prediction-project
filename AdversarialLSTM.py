@@ -6,7 +6,9 @@ import numpy as np
 import os
 import random
 from sklearn.utils import shuffle
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 
 try:
     from tensorflow.python.ops.nn_ops import leaky_relu
@@ -80,6 +82,7 @@ class AdversarialLSTM:
                 tra_date, val_date, tes_date, seq=self.paras['seq']
             )
         self.fea_dim = self.tra_pv.shape[2]
+        print(self.fea_dim)
 
     def construct_graph(self):
 
@@ -87,32 +90,30 @@ class AdversarialLSTM:
             device_name = '/gpu:0'
         else:
             device_name = '/cpu:0'
-        print('device name:', device_name)
 
         with tf.device(device_name):
 
-            print(self.fea_dim, self.paras['seq'])
-
-            # TODO: change this
             tf.reset_default_graph()
 
             # TODO: fix randomization
             if self.fix_init:
                 tf.set_random_seed(123456)
 
+            # ground truth outcomes (whether stock is going up or down), (N x 1)
             self.gt_var = tf.placeholder(tf.float32, [None, 1])
 
+            # inputs, (N, S, D), where S is the sequence length, D is the feature dimension
             self.pv_var = tf.placeholder(
                 tf.float32, [None, self.paras['seq'], self.fea_dim]
             )
 
+            # weekday variable, (N, S, 5)
             self.wd_var = tf.placeholder(
                 tf.float32, [None, self.paras['seq'], 5]
             )
 
-            self.lstm_cell = tf.contrib.rnn.BasicLSTMCell(
-                self.paras['unit']
-            )
+            # the hidden dimension for the LSTM layer
+            self.lstm_cell = tf.keras.layers.LSTMCell(units=self.paras['unit'])
 
             # self.outputs, _ = tf.nn.dynamic_rnn(
             #     # self.outputs, _ = tf.nn.static_rnn(
@@ -120,17 +121,21 @@ class AdversarialLSTM:
             #     # , initial_state=ini_sta
             # )
 
+            # feeding the input layer into latent dimension
             self.in_lat = tf.layers.dense(
                 self.pv_var, units=self.fea_dim,
                 activation=tf.nn.tanh, name='in_fc',
                 kernel_initializer=tf.glorot_uniform_initializer()
             )
 
+            # feeding the latent dimensional input sequence into the rnn
             self.outputs, _ = tf.nn.dynamic_rnn(
                 # self.outputs, _ = tf.nn.static_rnn(
                 self.lstm_cell, self.in_lat, dtype=tf.float32
                 # , initial_state=ini_sta
             )
+
+            print(self.outputs.shape)
 
             self.loss = 0
             self.adv_loss = 0
@@ -144,11 +149,13 @@ class AdversarialLSTM:
                         shape=[self.paras['unit'], self.paras['unit']],
                         initializer=tf.glorot_uniform_initializer()
                     )
+
                     self.av_b = tf.get_variable(
                         name='att_h', dtype=tf.float32,
                         shape=[self.paras['unit']],
                         initializer=tf.zeros_initializer()
                     )
+
                     self.av_u = tf.get_variable(
                         name='att_u', dtype=tf.float32,
                         shape=[self.paras['unit']],
@@ -167,15 +174,20 @@ class AdversarialLSTM:
 
                     self.a_con = tf.reduce_sum(
                         self.outputs * tf.expand_dims(self.a_alphas, -1), 1)
+
                     self.fea_con = tf.concat(
                         [self.outputs[:, -1, :], self.a_con],
                         axis=1)
+
                     print('adversarial scope')
+
                     # training loss
                     self.pred = self.adv_part(self.fea_con)
+
                     if self.hinge:
                         self.loss = tf.losses.hinge_loss(
                             self.gt_var, self.pred)
+
                     else:
                         self.loss = tf.losses.log_loss(self.gt_var, self.pred)
 
@@ -183,23 +195,31 @@ class AdversarialLSTM:
 
                     # adversarial loss
                     if self.adv_train:
+
                         print('gradient noise')
+
                         self.delta_adv = tf.gradients(
                             self.loss, [self.fea_con])[0]
+
                         tf.stop_gradient(self.delta_adv)
+
                         self.delta_adv = tf.nn.l2_normalize(
                             self.delta_adv, axis=1)
+
                         self.adv_pv_var = self.fea_con + \
                             self.paras['eps'] * self.delta_adv
 
                         scope.reuse_variables()
+
                         self.adv_pred = self.adv_part(self.adv_pv_var)
+
                         if self.hinge:
                             self.adv_loss = tf.losses.hinge_loss(
                                 self.gt_var, self.adv_pred)
                         else:
                             self.adv_loss = tf.losses.log_loss(
                                 self.gt_var, self.adv_pred)
+
             else:
                 with tf.variable_scope('lstm_att') as scope:
                     print('adversarial scope')
@@ -245,6 +265,50 @@ class AdversarialLSTM:
             self.optimizer = tf.train.AdamOptimizer(
                 learning_rate=self.paras['lr']
             ).minimize(self.obj_func)
+
+    def adv_part(self, adv_inputs):
+
+        print('adversial part')
+
+        if self.att:
+            with tf.variable_scope('pre_fc'):
+
+                self.fc_W = tf.get_variable(
+                    'weights', dtype=tf.float32,
+                    shape=[self.paras['unit'] * 2, 1],
+                    initializer=tf.glorot_uniform_initializer()
+                )
+
+                self.fc_b = tf.get_variable(
+                    'biases', dtype=tf.float32,
+                    shape=[1, ],
+                    initializer=tf.zeros_initializer()
+                )
+
+                if self.hinge:
+                    pred = tf.nn.bias_add(
+                        tf.matmul(adv_inputs, self.fc_W), self.fc_b
+                    )
+                else:
+                    pred = tf.nn.sigmoid(
+                        tf.nn.bias_add(tf.matmul(self.fea_con, self.fc_W),
+                                       self.fc_b)
+                    )
+        else:
+            # One hidden layer
+            if self.hinge:
+                pred = tf.layers.dense(
+                    adv_inputs, units=1, activation=None,
+                    name='pre_fc',
+                    kernel_initializer=tf.glorot_uniform_initializer()
+                )
+            else:
+                pred = tf.layers.dense(
+                    adv_inputs, units=1, activation=tf.nn.sigmoid,
+                    name='pre_fc',
+                    kernel_initializer=tf.glorot_uniform_initializer()
+                )
+        return pred
 
 
 if __name__ == '__main__':
@@ -292,7 +356,6 @@ if __name__ == '__main__':
     parser.add_argument('-rl', '--reload', type=int, default=0,
                         help='use pre-trained parameters')
     args = parser.parse_args()
-    print(args)
 
     parameters = {
         'seq': int(args.seq),
@@ -339,6 +402,8 @@ if __name__ == '__main__':
         adv=args.adv,
         reload=args.reload
     )
+
+    print("hey")
 
     pure_LSTM.construct_graph()
 
