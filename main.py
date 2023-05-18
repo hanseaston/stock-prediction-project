@@ -1,9 +1,11 @@
 import tensorflow as tf
+import numpy as np
 from argparse import ArgumentParser
 from Model import AdvAttentionLSTM
 from load_data import load_cla_data
 import tensorflow as tf
 from tqdm import tqdm
+from sklearn.metrics import accuracy_score
 
 
 def train(params):
@@ -12,18 +14,29 @@ def train(params):
         val_gt, tes_pv, tes_wd, tes_gt, feature_dim, latent_dim, alpha, beta, \
         eps, lr, batch_size, num_epoch = params
 
-    print(tra_pv.shape)
-
     train_dataset = tf.data.Dataset.from_tensor_slices((tra_pv, tra_gt))
+    train_dataset = train_dataset.shuffle(buffer_size=len(tra_pv))
     batched_train_dataset = train_dataset.batch(batch_size)
 
     model = AdvAttentionLSTM(
         feature_dim=feature_dim,
-        latent_dim=latent_dim
+        latent_dim=latent_dim,
+        adv_eps=eps,
+        l2_norm_alpha=alpha,
+        adv_beta=beta
     )
 
-    hinge_loss_fn = tf.losses.Hinge()
     optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=lr)
+
+    # train_predictions = model(tra_pv, training=False)
+    # train_predictions = (np.sign(train_predictions) + 1) / 2
+    # accuracy = accuracy_score(train_predictions, tra_gt)
+    # print(f"accuracy before training: {np.round(accuracy, 2)}%")
+
+    # test_predictions = model(tes_pv, training=False)
+    # test_predictions = (np.sign(test_predictions) + 1) / 2
+    # accuracy = accuracy_score(test_predictions, tes_gt)
+    # print(f"accuracy before training: {np.round(accuracy, 2)}%")
 
     for epoch in tqdm(range(num_epoch)):
 
@@ -31,21 +44,30 @@ def train(params):
 
         for step, (x_batch_train, y_batch_train) in enumerate(batched_train_dataset):
             with tf.GradientTape() as tape:
-                predicted_output = model(x_batch_train, training=True)
-                loss_value = hinge_loss_fn(y_batch_train, predicted_output)
+                pred = model([x_batch_train, y_batch_train], training=True)
+                loss_value = model.get_total_loss(pred, y_batch_train)
                 epoch_loss += loss_value
 
-            gradients = tape.gradient(loss_value, model.trainable_variables)
+            gradients = tape.gradient(epoch_loss, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_weights))
-        print(tf.squeeze(epoch_loss).numpy())
 
-        # # logging
-        # if step % 200 == 0:
-        #     print(
-        #         "Training loss (for one batch) at step %d: %.4f"
-        #         % (step, float(loss_value))
-        #     )
-        # print("Seen so far: %s samples" % ((step + 1) * batch_size))
+        # with tf.GradientTape() as tape:
+        #     regularization_loss = model.get_regluarization_loss()
+        #     gradients = tape.gradient(
+        #         regularization_loss, model.trainable_variables)
+        #     optimizer.apply_gradients(zip(gradients, model.trainable_weights))
+
+        print(epoch_loss.numpy().item())
+
+    # train_predictions = model(tra_pv, training=False)
+    # train_predictions = (np.sign(train_predictions) + 1) / 2
+    # accuracy = accuracy_score(train_predictions, tra_gt)
+    # print(f"accuracy after training: {np.round(accuracy, 2)}%")
+
+    # test_predictions = model(tes_pv, training=False)
+    # test_predictions = (np.sign(test_predictions) + 1) / 2
+    # accuracy = accuracy_score(test_predictions, tes_gt)
+    # print(f"accuracy after training: {np.round(accuracy, 2)}%")
 
 
 def get_params(args):
@@ -90,12 +112,12 @@ def parse_arguments():
     parser.add_argument('-l', '--seq', help='length of history', type=int,
                         default=5)
     parser.add_argument('-u', '--unit', help='number of hidden units in lstm',
-                        type=int, default=32)
+                        type=int, default=4)
     parser.add_argument('-l2', '--alpha_l2', type=float, default=1e-2,
                         help='alpha for l2 regularizer')
     parser.add_argument('-la', '--beta_adv', type=float, default=1e-2,
                         help='beta for adverarial loss')
-    parser.add_argument('-le', '--epsilon_adv', type=float, default=1e-2,
+    parser.add_argument('-le', '--epsilon_adv', type=float, default=5e-2,
                         help='epsilon to control the scale of noise')
     parser.add_argument('-s', '--step', help='steps to make prediction',
                         type=int, default=1)
