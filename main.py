@@ -33,10 +33,10 @@ def train(params):
     # accuracy = accuracy_score(train_predictions, tra_gt)
     # print(f"accuracy before training: {np.round(accuracy, 2)}%")
 
-    # test_predictions = model(tes_pv, training=False)
-    # test_predictions = (np.sign(test_predictions) + 1) / 2
-    # accuracy = accuracy_score(test_predictions, tes_gt)
-    # print(f"accuracy before training: {np.round(accuracy, 2)}%")
+    test_predictions = model(tes_pv, training=False)
+    test_predictions = (np.sign(test_predictions) + 1) / 2
+    accuracy = accuracy_score(test_predictions, tes_gt)
+    print(f"accuracy before training: {np.round(accuracy, 2)}%")
 
     for epoch in tqdm(range(num_epoch)):
 
@@ -44,11 +44,11 @@ def train(params):
 
         for step, (x_batch_train, y_batch_train) in enumerate(batched_train_dataset):
             with tf.GradientTape() as tape:
-                pred = model([x_batch_train, y_batch_train], training=True)
-                loss_value = model.get_total_loss(pred, y_batch_train)
+                model([x_batch_train, y_batch_train], training=True)
+                loss_value = model.get_total_loss(y_batch_train)
                 epoch_loss += loss_value
 
-            gradients = tape.gradient(epoch_loss, model.trainable_variables)
+            gradients = tape.gradient(loss_value, model.trainable_variables)
             optimizer.apply_gradients(zip(gradients, model.trainable_weights))
 
         # with tf.GradientTape() as tape:
@@ -64,10 +64,10 @@ def train(params):
     # accuracy = accuracy_score(train_predictions, tra_gt)
     # print(f"accuracy after training: {np.round(accuracy, 2)}%")
 
-    # test_predictions = model(tes_pv, training=False)
-    # test_predictions = (np.sign(test_predictions) + 1) / 2
-    # accuracy = accuracy_score(test_predictions, tes_gt)
-    # print(f"accuracy after training: {np.round(accuracy, 2)}%")
+    test_predictions = model(tes_pv, training=False)
+    test_predictions = (np.sign(test_predictions) + 1) / 2
+    accuracy = accuracy_score(test_predictions, tes_gt)
+    print(f"accuracy after training: {np.round(accuracy, 2)}%")
 
 
 def get_params(args):
