@@ -3,10 +3,9 @@ from keras.initializers import GlorotUniform, Zeros
 from keras.layers import Dense, RNN, LSTMCell
 from keras.models import Model
 from tensorflow import tanh, tensordot, reduce_sum, concat
-import numpy
 
 
-class AdvAttentionLSTM(Model):
+class AdvAttnLSTM(Model):
     def __init__(self, feature_dim, latent_dim, adv_eps, l2_norm_alpha, adv_beta):
         super().__init__()
         tf.random.set_seed(123456)
@@ -25,35 +24,41 @@ class AdvAttentionLSTM(Model):
             input = args[0]
             output = args[1]
 
+            # return self.attn_lstm_layer(input, training=False)
+
             with tf.GradientTape() as tape:
 
                 final_layer, predicted_output = self.attn_lstm_layer(
                     input, training=True)
 
-                normal_loss = self.get_normal_loss(predicted_output, output)
+                normal_loss = self.get_normal_loss(output, predicted_output)
 
                 self.regular_predictions = predicted_output
 
                 final_layer_gradient = tape.gradient(
-                    normal_loss, final_layer)[0]
+                    normal_loss, [final_layer])[0]
 
-                tf.stop_gradient(final_layer_gradient)
+                final_layer_gradient_no_grad = tf.stop_gradient(
+                    final_layer_gradient)
 
-                delta_adv = tf.nn.l2_normalize(final_layer_gradient)
+                delta_adv = tf.nn.l2_normalize(
+                    final_layer_gradient_no_grad, axis=1)
 
                 adversarial_input = final_layer + delta_adv * self.adv_eps
 
                 self.adversarial_predictions = self.attn_lstm_layer.decoding_layer(
                     adversarial_input)
 
+                return None
+
         else:
             input = args
             return self.attn_lstm_layer(input, training=False)
 
-    def get_normal_loss(self, predicted_output, correct_output):
-        return self.loss_fn(predicted_output, correct_output)
+    def get_normal_loss(self, correct_output, predicted_output):
+        return self.loss_fn(correct_output, predicted_output)
 
-    def get_total_loss(self, correct_output):
+    def get_total_loss(self, correct_output, _):
 
         loss = self.loss_fn(correct_output, self.regular_predictions)
 
@@ -62,10 +67,7 @@ class AdvAttentionLSTM(Model):
         adv_loss = self.loss_fn(
             correct_output, self.adversarial_predictions) * self.adv_beta
 
-        # total_loss = loss
-
         total_loss = loss + l2_norm_loss + adv_loss
-        total_loss -= l2_norm_loss
 
         return total_loss
 
@@ -102,7 +104,7 @@ class AttnLSTM(Model):
 
         # TODO: think of a better name
         self.attention_u = tf.Variable(
-            initial_value=Zeros()(latent_dim),
+            initial_value=GlorotUniform()((latent_dim, )),
             dtype=tf.float32,
             name='attention_u')
 
@@ -116,6 +118,7 @@ class AttnLSTM(Model):
 
         rnn_output = self.rnn_layer(encoded_feature)
 
+        # TODO: understand the logic again
         attention_latent = tanh(
             tensordot(rnn_output, self.attention_weight, axes=1) + self.attention_bias)
 
@@ -140,5 +143,5 @@ class AttnLSTM(Model):
     def get_regluarization_loss(self):
         loss = 0
         for train_var in self.trainable_variables:
-            loss += tf.nn.l2_loss(train_var) * 0.001
+            loss += tf.nn.l2_loss(train_var)
         return tf.cast(loss, dtype=tf.float32)

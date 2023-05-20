@@ -1,56 +1,48 @@
 import tensorflow as tf
-import numpy as np
+from keras.layers import Dense, RNN, LSTMCell
+from keras.models import Model
 
 
-class Model(tf.keras.Model):
-    def __init__(
-        self,
-        learning_rate,
-        num_layers,
-        size,
-        size_layer,
-        output_size,
-        forget_bias=0.1,
-    ):
-        super(Model, self).__init__()
-        self.learning_rate = learning_rate
-        self.num_layers = num_layers
-        self.size = size
-        self.size_layer = size_layer
-        self.output_size = output_size
-        self.forget_bias = forget_bias
+class LSTM(Model):
 
-        # TODO: understand #StackedRNNCells
-        self.rnn_cells = tf.keras.layers.StackedRNNCells(
-            [tf.keras.layers.LSTMCell(size_layer) for _ in range(num_layers)]
-        )
+    def __init__(self, feature_dim, latent_dim, l2_norm_alpha, **kwargs):
 
-        self.dense = tf.keras.layers.Dense(output_size)
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate)
-        self.loss = tf.keras.losses.MeanSquaredError()
+        super().__init__()
+        tf.random.set_seed(123456)
 
-    def call(self, inputs, initial_state=None):
-        if initial_state is None:
-            initial_state = self.rnn_cells.get_initial_state(inputs)
-        outputs, last_state = tf.nn.dynamic_rnn(
-            self.rnn_cells, inputs, initial_state=initial_state, dtype=tf.float32
-        )
-        logits = self.dense(outputs[:, -1, :])
-        return logits, last_state
+        self.l2_norm_alpha = l2_norm_alpha
 
+        self.encoding_layer = Dense(units=feature_dim,
+                                    activation='tanh',
+                                    kernel_initializer='glorot_uniform')
 
-def calculate_accuracy(real, predict):
-    real = np.array(real) + 1
-    predict = np.array(predict) + 1
-    percentage = 1 - np.sqrt(np.mean(np.square((real - predict) / real)))
-    return percentage * 100
+        self.rnn_layer = RNN(LSTMCell(
+            units=latent_dim,
+            activation='tanh',
+            kernel_initializer='glorot_uniform'),
+            return_sequences=True)
 
+        self.decoding_layer = Dense(units=1,
+                                    activation=None,
+                                    kernel_initializer='glorot_uniform')
 
-def anchor(signal, weight):
-    buffer = []
-    last = signal[0]
-    for i in signal:
-        smoothed_val = last * weight + (1 - weight) * i
-        buffer.append(smoothed_val)
-        last = smoothed_val
-    return buffer
+        self.loss_fn = tf.losses.Hinge()
+
+    def call(self, args, training):
+
+        input = args[0] if training else args
+
+        encoded_feature = self.encoding_layer(input)
+
+        rnn_output = self.rnn_layer(encoded_feature)
+
+        predictions = self.decoding_layer(rnn_output[:, -1, :])
+
+        return predictions
+
+    def get_total_loss(self, correct_output, predicted_output):
+        reg_loss = 0
+        for train_var in self.trainable_variables:
+            reg_loss += tf.nn.l2_loss(train_var)
+
+        return self.loss_fn(correct_output, predicted_output) + reg_loss * self.l2_norm_alpha
