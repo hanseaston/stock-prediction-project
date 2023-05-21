@@ -197,7 +197,6 @@ def parse_arguments():
 
     desc = 'stock analysis engine'
 
-    # TODO: organize arg parsers
     parser = ArgumentParser(description=desc)
 
     parser.add_argument('-p', '--path', help='path of stock data', type=str,
