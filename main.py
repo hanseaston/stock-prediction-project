@@ -49,7 +49,7 @@ def grid_search(params):
         val_predictions = model(val_pv, training=False)
         val_predictions = (np.sign(val_predictions) + 1) / 2
         accuracy = accuracy_score(val_predictions, val_gt)
-        print(f"val accuracy before training: {np.round(accuracy, 2)}%")
+        print(f"val accuracy before training: {np.round(accuracy * 100, 2)}%")
 
         for _ in tqdm(range(num_epoch)):
 
@@ -75,7 +75,7 @@ def grid_search(params):
     test_predictions = best_model(tes_pv, training=False)
     test_predictions = (np.sign(test_predictions) + 1) / 2
     accuracy = accuracy_score(test_predictions, tes_gt)
-    print(f"test accuracy with best model: {np.round(accuracy, 2)}%")
+    print(f"test accuracy with best model: {np.round(accuracy * 100, 2)}%")
 
 
 def single_shot(params):
@@ -97,8 +97,8 @@ def single_shot(params):
     }
 
     # model = get_model('LSTM', args)
-    # model = get_model('AdvAttnLSTM', args)
-    model = get_model('NeuralNets', args)
+    model = get_model('AdvAttnLSTM', args)
+    # model = get_model('NeuralNets', args)
 
     optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=lr)
 
@@ -126,13 +126,15 @@ def single_shot(params):
         train_predictions = model(tra_pv, training=False)
         train_predictions = (np.sign(train_predictions) + 1) / 2
         accuracy = accuracy_score(train_predictions, tra_gt)
-        print(f"train accuracy with current model: {np.round(accuracy, 2)}%")
+        print(
+            f"train accuracy with current model: {np.round(accuracy * 100, 2)}%")
 
         # for each epoch, report test accuracy
         test_predictions = model(tes_pv, training=False)
         test_predictions = (np.sign(test_predictions) + 1) / 2
         accuracy = accuracy_score(test_predictions, tes_gt)
-        print(f"test accuracy with current model: {np.round(accuracy, 2)}%")
+        print(
+            f"test accuracy with current model: {np.round(accuracy * 100, 2)}%")
 
         print(f"loss: {epoch_loss}")
 
@@ -140,7 +142,7 @@ def single_shot(params):
     test_predictions = model(tes_pv, training=False)
     test_predictions = (np.sign(test_predictions) + 1) / 2
     accuracy = accuracy_score(test_predictions, tes_gt)
-    print(f"test accuracy with best model: {np.round(accuracy, 2)}%")
+    print(f"test accuracy with best model: {np.round(accuracy * 100, 2)}%")
 
 
 def train(params):
@@ -199,7 +201,7 @@ def parse_arguments():
     parser = ArgumentParser(description=desc)
 
     parser.add_argument('-p', '--path', help='path of stock data', type=str,
-                        default='./dataset/ourpped')
+                        default='./dataset/kdd17')
 
     parser.add_argument('-l', '--seq', help='length of history', type=int,
                         default=10)
@@ -222,7 +224,7 @@ def parse_arguments():
     parser.add_argument('-e', '--epoch', help='epoch', type=int, default=100)
 
     parser.add_argument('-r', '--learning_rate', help='learning rate',
-                        type=float, default=0.01)
+                        type=float, default=0.001)
 
     parser.add_argument('-g', '--gpu', type=int, default=0, help='use gpu')
 

@@ -6,7 +6,7 @@ from tensorflow import tanh, tensordot, reduce_sum, concat
 
 
 class AdvAttnLSTM(Model):
-    def __init__(self, feature_dim, latent_dim, adv_eps, l2_norm_alpha, adv_beta):
+    def __init__(self, feature_dim, latent_dim, adv_eps, l2_norm_alpha, adv_beta, **kwargs):
         super().__init__()
         tf.random.set_seed(123456)
         self.attn_lstm_layer = AttnLSTM(feature_dim, latent_dim)
