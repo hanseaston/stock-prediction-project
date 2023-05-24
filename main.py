@@ -1,16 +1,22 @@
 import tensorflow as tf
 import numpy as np
-from argparse import ArgumentParser
-from load_data import load_cla_data
 import tensorflow as tf
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
 import itertools
+import random
+
+from load_data import load_cla_data
+from construct_dataset import construct_dataset
+
 
 # models
 from LSTM import LSTM
 from AdvAttnLSTM import AdvAttnLSTM
 from NeuralNets import NeuralNets
+
+from arugment_parser import parse_arguments
 
 
 def grid_search(params):
@@ -19,7 +25,11 @@ def grid_search(params):
         eps, lr, batch_size, num_epoch = params
 
     train_dataset = tf.data.Dataset.from_tensor_slices((tra_pv, tra_gt))
-    train_dataset = train_dataset.shuffle(buffer_size=len(tra_pv))
+    # train_dataset = train_dataset.shuffle(buffer_size=len(tra_pv))
+    # dataset_list = list(train_dataset.as_numpy_iterator())
+    # random.shuffle(dataset_list)
+    # train_dataset = tf.data.Dataset.from_tensor_slices(dataset_list)
+
     batched_train_dataset = train_dataset.batch(batch_size)
 
     alphas = [0.001, 0.01]
@@ -84,7 +94,10 @@ def single_shot(params):
         eps, lr, batch_size, num_epoch, sequence_len = params
 
     train_dataset = tf.data.Dataset.from_tensor_slices((tra_pv, tra_gt))
-    train_dataset = train_dataset.shuffle(buffer_size=len(tra_pv))
+    # train_dataset = train_dataset.shuffle(buffer_size=len(tra_pv))
+    # dataset_list = list(train_dataset.as_numpy_iterator())
+    # random.shuffle(dataset_list)
+    # train_dataset = tf.data.Dataset.from_tensor_slices(dataset_list)
     batched_train_dataset = train_dataset.batch(batch_size)
 
     args = {
@@ -101,6 +114,9 @@ def single_shot(params):
     # model = get_model('NeuralNets', args)
 
     optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=lr)
+
+    train_accuracy_hist = []
+    test_accuracy_hist = []
 
     for _ in tqdm(range(num_epoch)):
 
@@ -126,23 +142,33 @@ def single_shot(params):
         train_predictions = model(tra_pv, training=False)
         train_predictions = (np.sign(train_predictions) + 1) / 2
         accuracy = accuracy_score(train_predictions, tra_gt)
+        accuracy = np.round(accuracy * 100, 2)
         print(
-            f"train accuracy with current model: {np.round(accuracy * 100, 2)}%")
+            f"train accuracy with current model: {accuracy}%")
+        train_accuracy_hist.append(accuracy)
 
         # for each epoch, report test accuracy
         test_predictions = model(tes_pv, training=False)
         test_predictions = (np.sign(test_predictions) + 1) / 2
         accuracy = accuracy_score(test_predictions, tes_gt)
+        accuracy = np.round(accuracy * 100, 2)
         print(
-            f"test accuracy with current model: {np.round(accuracy * 100, 2)}%")
+            f"test accuracy with current model: {accuracy}%")
 
         print(f"loss: {epoch_loss}")
+        test_accuracy_hist.append(accuracy)
 
-    # final test accuracy after training all epochs
-    test_predictions = model(tes_pv, training=False)
-    test_predictions = (np.sign(test_predictions) + 1) / 2
-    accuracy = accuracy_score(test_predictions, tes_gt)
-    print(f"test accuracy with best model: {np.round(accuracy * 100, 2)}%")
+    print(len(train_accuracy_hist))
+
+    # plots
+    epochs = range(1, len(train_accuracy_hist) + 1)
+    plt.plot(epochs, train_accuracy_hist, 'bo-', label='Train Accuracy')
+    plt.plot(epochs, test_accuracy_hist, 'go-', label='Test Accuracy')
+    plt.title('Train and Test Accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    plt.show()
 
 
 def train(params):
@@ -181,55 +207,17 @@ def get_params(args):
     eps = float(args.epsilon_adv)
     lr = float(args.learning_rate)
 
-    tra_pv, _, tra_gt, \
-        val_pv, _, val_gt, \
-        tes_pv, _, tes_gt = load_cla_data(data_path,
-                                          tra_date, val_date, tes_date, seq=sequence_len)
+    # tra_pv, tra_gt, val_pv, val_gt, tes_pv, tes_gt = load_cla_data(data_path,
+    #                                                                tra_date, val_date, tes_date, seq=sequence_len)
+
+    tra_pv, tra_gt, val_pv, val_gt, tes_pv, tes_gt = construct_dataset(
+        lag=sequence_len)
 
     feature_dim = tra_pv.shape[2]
 
     return tra_pv, tra_gt, val_pv, val_gt, tes_pv, tes_gt, \
         feature_dim, latent_dim, alpha, beta, eps, lr, batch_size, \
         num_epoch, sequence_len
-
-
-def parse_arguments():
-
-    desc = 'stock analysis engine'
-
-    parser = ArgumentParser(description=desc)
-
-    parser.add_argument('-p', '--path', help='path of stock data', type=str,
-                        default='./dataset/kdd17')
-
-    parser.add_argument('-l', '--seq', help='length of history', type=int,
-                        default=10)
-
-    parser.add_argument('-u', '--unit', help='number of hidden units in lstm',
-                        type=int, default=32)
-
-    parser.add_argument('-l2', '--alpha_l2', type=float, default=1e-3,
-                        help='alpha for l2 regularizer')
-
-    parser.add_argument('-la', '--beta_adv', type=float, default=1e-2,
-                        help='beta for adverarial loss')
-
-    parser.add_argument('-le', '--epsilon_adv', type=float, default=1e-2,
-                        help='epsilon to control the scale of noise')
-
-    parser.add_argument('-b', '--batch_size', help='batch size', type=int,
-                        default=1024)
-
-    parser.add_argument('-e', '--epoch', help='epoch', type=int, default=100)
-
-    parser.add_argument('-r', '--learning_rate', help='learning rate',
-                        type=float, default=0.001)
-
-    parser.add_argument('-g', '--gpu', type=int, default=0, help='use gpu')
-
-    args = parser.parse_args()
-
-    return args
 
 
 if __name__ == '__main__':

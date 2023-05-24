@@ -131,7 +131,7 @@ def load_cla_data(data_path, tra_date, val_date, tes_date, seq=2,
                 tes_wd[ins_ind] = data_wd[date_ind - seq: date_ind, :]
                 tes_gt[ins_ind, 0] = (data_EOD[tic_ind][date_ind][-2] + 1) / 2
                 ins_ind += 1
-    return tra_pv, tra_wd, tra_gt, val_pv, val_wd, val_gt, tes_pv, tes_wd, tes_gt
+    return tra_pv, tra_gt, val_pv, val_gt, tes_pv, tes_gt
 
 
 if __name__ == '__main__':

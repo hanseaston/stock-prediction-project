@@ -30,7 +30,7 @@ class PolygonAPI:
             return None
 
     def has_next_url(self, response):
-        return response['next_url'] != None
+        return 'next_url' in response
 
 
 class PolygonParser:
@@ -39,26 +39,29 @@ class PolygonParser:
 
     def parse_all_tickers(self):
 
-        NUM_TICKERS_TO_FETCH = 1000
+        tickers_parsed = 0
+
+        NUM_TICKERS_TO_FETCH = 2000
 
         polygon_api = PolygonAPI()
 
         tickers_symbols = []
 
         response = polygon_api.get(
-            "v3/reference/tickers?market=stocks")
+            "v3/reference/tickers?type=CS&market=stocks&exchange=XNYS&active=true")
         tickers_symbols.extend([obj['ticker'] for obj in response['results']])
 
         while len(tickers_symbols) < NUM_TICKERS_TO_FETCH and polygon_api.has_next_url(response):
-            print('here')
             response = polygon_api.get_from_next_url(response)
             tickers_symbols.extend([obj['ticker']
                                    for obj in response['results']])
 
         for ticker in tickers_symbols:
             response = polygon_api.get(
-                f"v2/aggs/ticker/{ticker}/range/1/day/2021-06-01/2023-05-21?adjusted=true&sort=asc")
+                f"v2/aggs/ticker/{ticker}/range/1/day/2020-06-01/2023-05-21?adjusted=true&sort=asc")
             polygon_parser.parse_individual_ticker_within_time_range(response)
+            tickers_parsed += 1
+            print('Tickers parsed:', tickers_parsed)
 
     def parse_individual_ticker_within_time_range(self, response):
         ticker_history = response['results']
