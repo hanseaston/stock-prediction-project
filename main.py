@@ -94,10 +94,6 @@ def single_shot(params):
         eps, lr, batch_size, num_epoch, sequence_len = params
 
     train_dataset = tf.data.Dataset.from_tensor_slices((tra_pv, tra_gt))
-    # train_dataset = train_dataset.shuffle(buffer_size=len(tra_pv))
-    # dataset_list = list(train_dataset.as_numpy_iterator())
-    # random.shuffle(dataset_list)
-    # train_dataset = tf.data.Dataset.from_tensor_slices(dataset_list)
     batched_train_dataset = train_dataset.batch(batch_size)
 
     args = {
@@ -109,8 +105,8 @@ def single_shot(params):
         "sequence_len": sequence_len
     }
 
-    # model = get_model('LSTM', args)
-    model = get_model('AdvAttnLSTM', args)
+    model = get_model('LSTM', args)
+    # model = get_model('AdvAttnLSTM', args)
     # model = get_model('NeuralNets', args)
 
     optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=lr)
@@ -192,12 +188,6 @@ def get_model(model_name, args):
 
 def get_params(args):
 
-    # hardcoding the date for now since we only use one dataset
-    tra_date = '2014-01-02'
-    val_date = '2015-08-03'
-    tes_date = '2015-10-01'
-
-    data_path = args.path
     batch_size = args.batch_size
     num_epoch = args.epoch
     sequence_len = int(args.seq)
@@ -206,9 +196,6 @@ def get_params(args):
     beta = float(args.beta_adv)
     eps = float(args.epsilon_adv)
     lr = float(args.learning_rate)
-
-    # tra_pv, tra_gt, val_pv, val_gt, tes_pv, tes_gt = load_cla_data(data_path,
-    #                                                                tra_date, val_date, tes_date, seq=sequence_len)
 
     tra_pv, tra_gt, val_pv, val_gt, tes_pv, tes_gt = construct_dataset(
         lag=sequence_len)

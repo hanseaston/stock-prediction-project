@@ -2,6 +2,8 @@ import requests
 import datetime
 import csv
 
+from util import remove_all_files_from_dir
+
 
 class PolygonAPI:
     def __init__(self):
@@ -10,7 +12,7 @@ class PolygonAPI:
             'Authorization': 'Bearer cC8AtpZvOZlXEfTeQp7nI5oCxmePPQ7j',
         }
 
-    def get(self, endpoint, params=None):
+    def fetch(self, endpoint, params=None):
         url = self.base_url + endpoint
         response = requests.get(url, headers=self.headers, params=params)
 
@@ -18,9 +20,10 @@ class PolygonAPI:
             return response.json()
         else:
             print('Request failed with status code:', response.status_code)
-            return None
+            print('Requested endpoint is:', endpoint)
+            raise ValueError()
 
-    def get_from_next_url(self, response):
+    def fetch_from_next_url(self, response):
         response = requests.get(response['next_url'], headers=self.headers)
 
         if response.status_code == 200:
@@ -35,39 +38,65 @@ class PolygonAPI:
 
 class PolygonParser:
     def __init__(self):
-        pass
+        self.polygon_api = PolygonAPI()
+        self.data_base_url = "./dataset/polygon"
 
-    def parse_all_tickers(self):
+    def parse_sp500_tickers(self):
 
-        tickers_parsed = 0
+        file_path = "./dataset/s&p_500.csv"
+        date_start = "2015-01-01"
+        date_end = "2019-12-31"
 
-        NUM_TICKERS_TO_FETCH = 2000
+        remove_all_files_from_dir(self.data_base_url)
 
-        polygon_api = PolygonAPI()
+        ticker_symbols = []
+        with open(file_path, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                ticker_symbols.append(row[0])
+
+        for ticker in ticker_symbols:
+            polygon_parser.parse_individual_ticker_within_time_range(
+                ticker, date_start, date_end)
+
+    def parse_tickers_from_stock_exchange(self):
+
+        num_ticker_to_fetch = 1000
+        date_start = "2020-06-01"
+        date_end = "2023-05-21"
+        stock_exchange = "XNYS"
+
+        remove_all_files_from_dir(self.data_base_url)
 
         tickers_symbols = []
 
-        response = polygon_api.get(
-            "v3/reference/tickers?type=CS&market=stocks&exchange=XNYS&active=true")
+        response = self.polygon_api.fetch(
+            f"v3/reference/tickers?type=CS&market=stocks&exchange={stock_exchange}&active=true")
+
         tickers_symbols.extend([obj['ticker'] for obj in response['results']])
 
-        while len(tickers_symbols) < NUM_TICKERS_TO_FETCH and polygon_api.has_next_url(response):
-            response = polygon_api.get_from_next_url(response)
+        while len(tickers_symbols) < num_ticker_to_fetch and self.polygon_api.has_next_url(response):
+            response = self.polygon_api.fetch_from_next_url(response)
             tickers_symbols.extend([obj['ticker']
                                    for obj in response['results']])
 
         for ticker in tickers_symbols:
-            response = polygon_api.get(
-                f"v2/aggs/ticker/{ticker}/range/1/day/2020-06-01/2023-05-21?adjusted=true&sort=asc")
-            polygon_parser.parse_individual_ticker_within_time_range(response)
-            tickers_parsed += 1
-            print('Tickers parsed:', tickers_parsed)
+            polygon_parser.parse_individual_ticker_within_time_range(
+                ticker, date_start, date_end)
 
-    def parse_individual_ticker_within_time_range(self, response):
+    def parse_individual_ticker_within_time_range(self, ticker, date_start, date_end):
+
+        response = self.polygon_api.fetch(
+            f"v2/aggs/ticker/{ticker}/range/1/day/{date_start}/{date_end}?adjusted=true&sort=asc")
+
+        if response is None or 'results' not in response:
+            return
+
         ticker_history = response['results']
         ticker_name = response['ticker']
 
-        file_name = f'./dataset/polygon/{ticker_name}.csv'
+        file_name = f'{self.data_base_url}/{ticker_name}.csv'
 
         with open(file_name, 'w', newline='') as file:
             writer = csv.writer(file)
@@ -91,4 +120,5 @@ class PolygonParser:
 
 if __name__ == '__main__':
     polygon_parser = PolygonParser()
-    polygon_parser.parse_all_tickers()
+    # polygon_parser.parse_tickers_from_stock_exchange()
+    polygon_parser.parse_sp500_tickers()

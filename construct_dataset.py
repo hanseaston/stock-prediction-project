@@ -1,10 +1,9 @@
 import csv
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 
-trending_down_threshold = -0.005
-trending_up_threshold = 0.005
+trending_down_threshold = -0.01
+trending_up_threshold = 0.01
 
 
 def percentage_between_thresholds(percentage):
@@ -44,7 +43,9 @@ def construct_data_matrix(filepath):
         stripped_rows = []
         line_number = 0
         for row in reader:
+            # to remove the date info
             stripped_row = row[1:]
+            # first 30 rows should always have entries missing (due to SMA_30 not having enough data yet)
             if line_number >= 30:
                 stripped_rows.append(stripped_row)
             line_number += 1
@@ -60,14 +61,24 @@ def construct_dataset(lag):
     path = './dataset/polygon_processed'
     total_entry_cnt = 0
     for filename in os.listdir(path):
+
         filepath = os.path.join(path, filename)
+
         matrix = construct_data_matrix(filepath)
+
         n, _ = matrix.shape
         total_entry_cnt += n
+
+        # iterating each row for each stock ticker in the processed file
         for row_num in range(n):
-            if row_num + lag >= n:
+
+            # if lag exceeds number of entries in the files, ignore
+            if row_num + lag + 1 >= n:
                 break
-            percentage_change_after_lag = matrix[row_num + lag][3]
+
+            # if movement percentage being predicted (lag entries afterwards, 3 refers to the closing price
+            # percentage) is too little, then ignore the training sample, otherwise, use the training sample
+            percentage_change_after_lag = matrix[row_num + lag + 1][3]
             if percentage_between_thresholds(percentage_change_after_lag):
                 continue
             else:
@@ -79,8 +90,9 @@ def construct_dataset(lag):
     y = np.array(y)
     n = X.shape[0]
 
+    # training set, 70%, validation and test, 15%
     train_index = int(n * 0.70)
-    valid_index = int(n * 0.90)
+    valid_index = int(n * 0.85)
 
     train_X = X[0: train_index]
     train_y = y[0: train_index]
@@ -89,8 +101,10 @@ def construct_dataset(lag):
     test_X = X[valid_index:]
     test_Y = y[valid_index:]
 
+    print(train_X.shape)
+
     return train_X, train_y, valid_X, valid_y, test_X, test_Y
 
 
 if __name__ == '__main__':
-    construct_dataset(10)
+    train_X, train_y, valid_X, valid_y, test_X, test_Y = construct_dataset(10)
