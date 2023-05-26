@@ -1,7 +1,7 @@
 import csv
 import os
 
-from util import is_approximately_zero, remove_all_files_from_dir
+from utils.utils import is_approximately_zero, remove_all_files_from_dir
 
 
 def check_invalid_data(attributes):

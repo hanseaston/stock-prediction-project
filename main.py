@@ -7,16 +7,16 @@ import matplotlib.pyplot as plt
 import itertools
 import random
 
-from load_data import load_cla_data
-from construct_dataset import construct_dataset
+from data_processing.paper_load_data import load_cla_data
+from data_processing.construct_dataset import construct_dataset
 
 
 # models
-from LSTM import LSTM
-from AdvAttnLSTM import AdvAttnLSTM
-from NeuralNets import NeuralNets
+from models.LSTM import LSTM
+from models.AdvAttnLSTM import AdvAttnLSTM
+from models.NeuralNets import NeuralNets
 
-from arugment_parser import parse_arguments
+from utils.arugment_parser import parse_arguments
 
 
 def grid_search(params):

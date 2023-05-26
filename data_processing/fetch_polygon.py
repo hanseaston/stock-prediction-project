@@ -2,7 +2,7 @@ import requests
 import datetime
 import csv
 
-from util import remove_all_files_from_dir
+from utils.utils import remove_all_files_from_dir
 
 
 class PolygonAPI:

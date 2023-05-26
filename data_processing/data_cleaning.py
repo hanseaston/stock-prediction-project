@@ -2,7 +2,7 @@ import csv
 import os
 import matplotlib.pyplot as plt
 
-from util import is_approximately_zero
+from utils.utils import is_approximately_zero
 
 if __name__ == '__main__':
 
