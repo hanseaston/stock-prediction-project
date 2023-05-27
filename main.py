@@ -208,6 +208,5 @@ def get_params(args):
 
 
 if __name__ == '__main__':
-    args = parse_arguments()
     params = get_params(args)
     train(params)

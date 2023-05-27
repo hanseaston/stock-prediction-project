@@ -17,3 +17,10 @@ def remove_all_files_from_dir(dir_path):
             os.remove(file_path)
             files_removed += 1
     print(f"Done removing ... {files_removed} files")
+
+
+def check_all_zeros(lst):
+    for element in lst:
+        if element != 0:
+            return False
+    return True
