@@ -3,21 +3,27 @@ from keras.layers import Dense, RNN, LSTMCell
 from keras.models import Model
 
 
+######### Model configuration #########
+LATENT_DIM = 32
+L2_ALPHA = 1e-5
+#######################################
+
+
 class LSTM(Model):
 
-    def __init__(self, feature_dim, latent_dim, l2_norm_alpha, **kwargs):
+    def __init__(self, feature_dim, **kwargs):
 
         super().__init__()
         tf.random.set_seed(123456)
 
-        self.l2_norm_alpha = l2_norm_alpha
+        self.l2_norm_alpha = L2_ALPHA
 
         self.encoding_layer = Dense(units=feature_dim,
                                     activation='tanh',
                                     kernel_initializer='glorot_uniform')
 
         self.rnn_layer = RNN(LSTMCell(
-            units=latent_dim,
+            units=LATENT_DIM,
             activation='tanh',
             kernel_initializer='glorot_uniform'),
             return_sequences=True)

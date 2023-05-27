@@ -2,16 +2,18 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Flatten
 import tensorflow as tf
 
+######### Model configuration #########
+L2_ALPHA = 1e-5
+#######################################
+
 
 class NeuralNets(Model):
 
-    def __init__(self, feature_dim, sequence_len, l2_norm_alpha, **kwargs):
+    def __init__(self, feature_dim, sequence_len, **kwargs):
 
         super().__init__()
 
-        tf.random.set_seed(123456)
-
-        self.l2_norm_alpha = l2_norm_alpha
+        self.l2_norm_alpha = L2_ALPHA
 
         # Define sequential model
         self.model = Sequential()

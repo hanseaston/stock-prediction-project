@@ -5,14 +5,21 @@ from keras.models import Model
 from tensorflow import tanh, tensordot, reduce_sum, concat
 
 
+######### Model configuration #########
+LATENT_DIM = 32
+L2_ALPHA = 1e-5
+ADV_BETA = 1e-2
+ADV_EPS = 1e-2
+#######################################
+
+
 class AdvAttnLSTM(Model):
-    def __init__(self, feature_dim, latent_dim, adv_eps, l2_norm_alpha, adv_beta, **kwargs):
+    def __init__(self, feature_dim, **kwargs):
         super().__init__()
-        tf.random.set_seed(123456)
-        self.attn_lstm_layer = AttnLSTM(feature_dim, latent_dim)
-        self.adv_eps = adv_eps
-        self.l2_norm_alpha = l2_norm_alpha
-        self.adv_beta = adv_beta
+        self.attn_lstm_layer = AttnLSTM(feature_dim, LATENT_DIM)
+        self.adv_eps = ADV_EPS
+        self.l2_norm_alpha = L2_ALPHA
+        self.adv_beta = ADV_BETA
         self.regular_predictions = None
         self.adversarial_predictions = None
         self.loss_fn = tf.losses.Hinge()
@@ -80,7 +87,6 @@ class AttnLSTM(Model):
     def __init__(self, feature_dim, latent_dim):
 
         super().__init__()
-        tf.random.set_seed(123456)
 
         self.encoding_layer = Dense(units=feature_dim,
                                     activation='tanh',
