@@ -27,8 +27,9 @@ class base_constructor(ABC):
                 return True
         return False
 
-    def construct_data_matrix(self):
-        with open(self.data_source_dir, 'r') as f:
+    def construct_data_matrix(self, filename):
+        filepath = os.path.join(self.data_source_dir, filename)
+        with open(filepath, 'r') as f:
             reader = csv.reader(f)
             next(reader)
             stripped_rows = []

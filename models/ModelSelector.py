@@ -1,6 +1,6 @@
-from LSTM import LSTM
-from AdvAttnLSTM import AdvAttnLSTM
-from NeuralNets import NeuralNets
+from models.LSTM import LSTM
+from models.AdvAttnLSTM import AdvAttnLSTM
+from models.NeuralNets import NeuralNets
 
 
 def select_model(model_name, args):

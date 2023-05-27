@@ -174,8 +174,8 @@ def process_data(data_path, processed_data_path):
 
 if __name__ == '__main__':
 
-    data_path_base_path = './dataset/polygon'
-    processed_data_base_path = './dataset/polygon_processed'
+    data_path_base_path = '../raw_data/polygon'
+    processed_data_base_path = '../raw_data/polygon_processed'
 
     remove_all_files_from_dir(processed_data_base_path)
 

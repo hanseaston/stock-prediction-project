@@ -1,8 +1,9 @@
-from base_constructor import base_constructor
-
-
 import os
-from ..utils.utils import check_all_zeros
+import tensorflow as tf
+
+
+from dataset_construction.base_constructor import base_constructor
+from utils.utils import check_all_zeros
 
 
 class ternary_constructor(base_constructor):
@@ -22,11 +23,9 @@ class ternary_constructor(base_constructor):
         X = []
         y = []
 
-        for filename in os.listdir(self.bas):
+        for filename in os.listdir(self.data_source_dir):
 
-            filepath = os.path.join(self.data_source_dir, filename)
-
-            matrix = self.construct_data_matrix(filepath)
+            matrix = self.construct_data_matrix(filename)
 
             n, d = matrix.shape
             self.feature_dimen = d
@@ -57,21 +56,19 @@ class ternary_constructor(base_constructor):
 
         return self.construct_train_valid_test_set_from_X_y(X, y)
 
-    def get_trend_cnt_ratio(self):
+    def get_trend_ratios(self):
         self.validate_trending_cnt()
-        sum = self.trend_down_cnt + self.trend_even_cnt + self.trend_up_cnt
-        trend_down_ratio = self.trend_down_cnt / sum
-        trend_even_ratio = self.trend_even_cnt / sum
-        trend_up_ratio = self.trend_up_cnt / sum
-        return trend_down_ratio, trend_even_ratio, trend_up_ratio
+        trend_down_ratio = self.trend_even_cnt / self.trend_down_cnt
+        trend_up_ratio = self.trend_even_cnt / self.trend_up_cnt
+        return tf.constant([trend_down_ratio, 1.0, trend_up_ratio])
 
     def convert_percentage_to_one_hot_encoding(self, percentage):
         if percentage >= self.trending_up_threshold:
-            return [0.0, 0.0, 1.0], 1
+            return tf.constant([0.0, 0.0, 1.0]), 1
         elif percentage <= self.trending_down_threshold:
-            return [1.0, 0.0, 0.0], -1
+            return tf.constant([1.0, 0.0, 0.0]), -1
         else:
-            return [0.0, 1.0, 0.0], 0
+            return tf.constant([0.0, 1.0, 0.0]), 0
 
     def initialize_trending_cnt(self):
         self.trend_down_cnt = 0
@@ -81,3 +78,6 @@ class ternary_constructor(base_constructor):
     def validate_trending_cnt(self):
         if check_all_zeros([self.trend_down_cnt, self.trend_even_cnt, self.trend_up_cnt]):
             raise ValueError("counts have not been intialized yet")
+        if self.trend_even_cnt < self.trend_down_cnt or self.trend_even_cnt < self.trend_up_cnt:
+            raise ValueError(
+                "mistakes made when counting, trending even count should be the largest")

@@ -5,16 +5,15 @@ from keras.models import Model
 
 ######### Model configuration #########
 LATENT_DIM = 32
-L2_ALPHA = 1e-5
+L2_ALPHA = 0
 #######################################
 
 
 class LSTM(Model):
 
-    def __init__(self, feature_dim, **kwargs):
+    def __init__(self, feature_dim, output_dim, loss_fn, **kwargs):
 
         super().__init__()
-        tf.random.set_seed(123456)
 
         self.l2_norm_alpha = L2_ALPHA
 
@@ -28,11 +27,11 @@ class LSTM(Model):
             kernel_initializer='glorot_uniform'),
             return_sequences=True)
 
-        self.decoding_layer = Dense(units=1,
+        self.decoding_layer = Dense(units=output_dim,
                                     activation=None,
                                     kernel_initializer='glorot_uniform')
 
-        self.loss_fn = tf.losses.Hinge()
+        self.loss_fn = loss_fn
 
     def call(self, args, training):
 

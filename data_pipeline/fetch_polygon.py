@@ -20,7 +20,8 @@ class PolygonAPI:
             return response.json()
         else:
             print('Request failed with status code:', response.status_code)
-            print('Requested endpoint is:', endpoint)
+            print('Requested endpoint is:', url)
+            print('More detail:', response.json()['error'])
             raise ValueError()
 
     def fetch_from_next_url(self, response):
@@ -29,7 +30,8 @@ class PolygonAPI:
         if response.status_code == 200:
             return response.json()
         else:
-            print('Request failed with status code:', response.status_code)
+            print('Request got next url failed with status code:',
+                  response.status_code)
             return None
 
     def has_next_url(self, response):
@@ -39,13 +41,13 @@ class PolygonAPI:
 class PolygonParser:
     def __init__(self):
         self.polygon_api = PolygonAPI()
-        self.data_base_url = "./dataset/polygon"
+        self.data_base_url = "../raw_data/polygon"
 
     def parse_sp500_tickers(self):
 
-        file_path = "./dataset/s&p_500.csv"
-        date_start = "2015-01-01"
-        date_end = "2019-12-31"
+        file_path = "../raw_data/s&p_500.csv"
+        date_start = "2021-01-01"
+        date_end = "2023-05-01"
 
         remove_all_files_from_dir(self.data_base_url)
 
