@@ -3,50 +3,36 @@ import tensorflow as tf
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from dataset_construction.ternary_constructor import ternary_constructor
+from dataset_construction.binary_constructor import binary_constructor
 from models.ModelSelector import select_model
-from losses.WeightedCrossEntropy import WeightedCrossEntropy
-from training.evaluator.TrenaryEvaluator import TrenaryEvaluator
+from training.evaluator.BinaryEvaluator import BinaryEvaluator
+
+from keras.losses import BinaryCrossentropy
 
 ######### Training configuration #########
-BATCH_SIZE = 2048
+BATCH_SIZE = 1024 * 4
 BUFFER_SIZE = 128
 NUM_EPOCH = 100
 LEARNING_RATE = 1e-3
 LAG = 10
-# C[0][0], C[1][1], and C[2][2] are all 0 because there is no cost for a correct prediction.
-# C[0][1] is 'a', which represents the cost of predicting class 0 when the true class is 1
-# C[0][2] is 'b', which represents the cost of predicting class 0 when the true class is 2
-# C[1][0] is 'c', which represents the cost of predicting class 1 when the true class is 0
-# C[1][2] is 'd', which represents the cost of predicting class 1 when the true class is 2
-# C[2][0] is 'e', which represents the cost of predicting class 2 when the true class is 0
-# C[2][1] is 'f', which represents the cost of predicting class 2 when the true class is 1
-
-# 1: is fine
-# 2: should not
-# 3: definitely not
-COST_MATRIX = [[0, 1, 2], [2, 0, 2], [3, 2, 0]]
 #######################################
 
 
 def single_shot():
 
     # initialize dataset
-    dataset_constructor = ternary_constructor(LAG)
+    dataset_constructor = binary_constructor(LAG)
     train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
     feature_dum = dataset_constructor.get_feature_dimension()
     train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
     train_dataset = train_dataset.shuffle(BUFFER_SIZE)
     batched_train_dataset = train_dataset.batch(BATCH_SIZE)
 
-    # initialize ratio weights
-    trend_ratios = dataset_constructor.get_trend_ratios()
-
     # initialize loss function
-    loss_fn = WeightedCrossEntropy(trend_weights)
+    loss_fn = BinaryCrossentropy(from_logits=False)
 
     # initialize model
-    args = {'feature_dim': feature_dum, 'output_dim': 3, 'loss_fn': loss_fn}
+    args = {'feature_dim': feature_dum, 'output_dim': 1, 'loss_fn': loss_fn}
     model = select_model('LSTM', args)
     optimizer = tf.keras.optimizers.legacy.Adam(learning_rate=LEARNING_RATE)
 
@@ -75,27 +61,26 @@ def single_shot():
 
         # for each epoch, report train accuracy
         train_predictions = model(train_X, training=False)
-        train_predictions = dataset_constructor.convert_prediction_to_one_hot_encoding(
-            train_predictions)
-        trend_up_or_down_accuracy = TrenaryEvaluator(
-            train_y, train_predictions).trend_up_or_down_accuracy()
-        print(
-            f"train accuracy with current model: {trend_up_or_down_accuracy}%")
 
-        train_accuracy_hist.append(trend_up_or_down_accuracy)
+        evaluator = BinaryEvaluator(train_y, train_predictions, 0.5)
+
+        evaluator.positive_accuracy_score("train")
+        evaluator.negative_accuracy_score("train")
+        evaluator.accuracy_score('train')
+        print()
 
         # for each epoch, report test accuracy
         test_predictions = model(test_X, training=False)
-        test_predictions = dataset_constructor.convert_prediction_to_one_hot_encoding(
-            test_predictions)
 
-        trend_up_or_down_accuracy = TrenaryEvaluator(
-            test_y, test_predictions).trend_up_or_down_accuracy()
-        print(
-            f"test accuracy with current model: {trend_up_or_down_accuracy}%")
+        evaluator = BinaryEvaluator(
+            test_y, test_predictions, 0.6)
+
+        evaluator.positive_accuracy_score("test")
+        evaluator.negative_accuracy_score("test")
+        evaluator.accuracy_score('test')
 
         print(f"loss: {epoch_loss}")
-        test_accuracy_hist.append(trend_up_or_down_accuracy)
+        print("----------------------------------")
 
     # plots
     epochs = range(1, len(train_accuracy_hist) + 1)

@@ -1,5 +1,6 @@
 import os
 import tensorflow as tf
+import numpy as np
 
 
 from dataset_construction.base_constructor import base_constructor
@@ -41,18 +42,18 @@ class ternary_constructor(base_constructor):
 
                 X.append(matrix[row_num: row_num + self.lag])
 
-                one_hot_label, movement_direction = self.convert_percentage_to_one_hot_encoding(
+                movement_label = self.convert_percentage_to_label(
                     percentage_change_after_lag)
 
                 # count label distribution
-                if movement_direction == -1:
+                if movement_label == 0:
                     self.trend_down_cnt += 1
-                elif movement_direction == 0:
+                elif movement_label == 1:
                     self.trend_even_cnt += 1
                 else:
                     self.trend_up_cnt += 1
 
-                y.append(one_hot_label)
+                y.append(movement_label)
 
         return self.construct_train_valid_test_set_from_X_y(X, y)
 
@@ -69,6 +70,14 @@ class ternary_constructor(base_constructor):
             return tf.constant([1.0, 0.0, 0.0]), -1
         else:
             return tf.constant([0.0, 1.0, 0.0]), 0
+
+    def convert_percentage_to_label(self, percentage):
+        if percentage >= self.trending_up_threshold:
+            return 2
+        elif percentage <= self.trending_down_threshold:
+            return 0
+        else:
+            return 1
 
     def convert_prediction_to_one_hot_encoding(self, predictions):
         max_indices = tf.argmax(predictions, axis=1)

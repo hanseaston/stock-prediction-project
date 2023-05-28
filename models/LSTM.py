@@ -1,6 +1,7 @@
 import tensorflow as tf
 from keras.layers import Dense, RNN, LSTMCell
 from keras.models import Model
+import numpy as np
 
 
 ######### Model configuration #########
@@ -28,7 +29,7 @@ class LSTM(Model):
             return_sequences=True)
 
         self.decoding_layer = Dense(units=output_dim,
-                                    activation=None,
+                                    activation='sigmoid',
                                     kernel_initializer='glorot_uniform')
 
         self.loss_fn = loss_fn
