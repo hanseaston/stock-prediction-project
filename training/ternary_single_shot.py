@@ -2,16 +2,17 @@ import tensorflow as tf
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
 
 from dataset_construction.ternary_constructor import ternary_constructor
 from models.ModelSelector import select_model
 from losses.WeightedCrossEntropy import WeightedCrossEntropy
+from training.evaluator.TrenaryEvaluator import TrenaryEvaluator
 
 ######### Training configuration #########
-BATCH_SIZE = 1024
-NUM_EPOCH = 50
+BATCH_SIZE = 2048
+BUFFER_SIZE = 128
+NUM_EPOCH = 100
 LEARNING_RATE = 1e-3
 LAG = 10
 TREND_SCALARS = tf.constant([1.0, 1.0, 1.0])
@@ -22,14 +23,15 @@ def single_shot():
 
     # initialize dataset
     dataset_constructor = ternary_constructor(LAG)
-    train_X, train_y, valid_X, valid_y, test_X, test_Y = dataset_constructor.construct_model_dataset()
+    train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
     feature_dum = dataset_constructor.get_feature_dimension()
     train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
+    train_dataset = train_dataset.shuffle(BUFFER_SIZE)
     batched_train_dataset = train_dataset.batch(BATCH_SIZE)
 
     # initialize ratio weights
     trend_ratios = dataset_constructor.get_trend_ratios()
-    trend_weights = TREND_SCALARS
+    trend_weights = TREND_SCALARS * trend_ratios
 
     # initialize loss function
     loss_fn = WeightedCrossEntropy(trend_weights)
@@ -62,25 +64,29 @@ def single_shot():
             optimizer.apply_gradients(
                 zip(gradients, model.trainable_weights))
 
-        # for each epoch, report train accuracyc
+        # for each epoch, report train accuracy
         train_predictions = model(train_X, training=False)
-        train_predictions = (np.sign(train_predictions) + 1) / 2
-        accuracy = accuracy_score(train_predictions, train_y)
-        accuracy = np.round(accuracy * 100, 2)
+        train_predictions = dataset_constructor.convert_prediction_to_one_hot_encoding(
+            train_predictions)
+        trend_up_or_down_accuracy = TrenaryEvaluator(
+            train_y, train_predictions).trend_up_or_down_accuracy()
         print(
-            f"train accuracy with current model: {accuracy}%")
-        train_accuracy_hist.append(accuracy)
+            f"train accuracy with current model: {trend_up_or_down_accuracy}%")
+
+        train_accuracy_hist.append(trend_up_or_down_accuracy)
 
         # for each epoch, report test accuracy
         test_predictions = model(test_X, training=False)
-        test_predictions = (np.sign(test_predictions) + 1) / 2
-        accuracy = accuracy_score(test_predictions, test_Y)
-        accuracy = np.round(accuracy * 100, 2)
+        test_predictions = dataset_constructor.convert_prediction_to_one_hot_encoding(
+            test_predictions)
+
+        trend_up_or_down_accuracy = TrenaryEvaluator(
+            test_y, test_predictions).trend_up_or_down_accuracy()
         print(
-            f"test accuracy with current model: {accuracy}%")
+            f"test accuracy with current model: {trend_up_or_down_accuracy}%")
 
         print(f"loss: {epoch_loss}")
-        test_accuracy_hist.append(accuracy)
+        test_accuracy_hist.append(trend_up_or_down_accuracy)
 
     print(len(train_accuracy_hist))
 

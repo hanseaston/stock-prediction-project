@@ -1,4 +1,5 @@
 import os
+import tensorflow as tf
 
 
 def is_approximately_zero(value, tolerance=1e-5):
@@ -24,3 +25,7 @@ def check_all_zeros(lst):
         if element != 0:
             return False
     return True
+
+
+def check_tensor_equal(tensor1, tensor2):
+    return tf.reduce_all(tf.equal(tensor1, tensor2))

@@ -58,9 +58,9 @@ class base_constructor(ABC):
         valid_X = X[train_index: valid_index]
         valid_y = y[train_index: valid_index]
         test_X = X[valid_index:]
-        test_Y = y[valid_index:]
+        test_y = y[valid_index:]
 
-        return train_X, train_y, valid_X, valid_y, test_X, test_Y
+        return train_X, train_y, valid_X, valid_y, test_X, test_y
 
     def validate_dataset(self):
         for filename in os.listdir(self.data_source_dir):

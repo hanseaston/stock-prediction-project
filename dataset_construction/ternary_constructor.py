@@ -70,6 +70,11 @@ class ternary_constructor(base_constructor):
         else:
             return tf.constant([0.0, 1.0, 0.0]), 0
 
+    def convert_prediction_to_one_hot_encoding(self, predictions):
+        max_indices = tf.argmax(predictions, axis=1)
+        one_hot_predictions = tf.one_hot(max_indices, depth=3)
+        return one_hot_predictions
+
     def initialize_trending_cnt(self):
         self.trend_down_cnt = 0
         self.trend_even_cnt = 0
