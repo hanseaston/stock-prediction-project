@@ -7,10 +7,10 @@ from imblearn.over_sampling import SMOTE
 
 class binary_constructor(base_constructor):
 
-    def __init__(self, lag):
+    def __init__(self, lag, threshold):
         super().__init__("../raw_data/polygon_processed")
         self.lag = lag
-        self.threshold = 0.00
+        self.threshold = threshold
 
     def construct_model_dataset(self):
 
@@ -50,23 +50,11 @@ class binary_constructor(base_constructor):
         train_X, train_y, valid_X, valid_y, test_X, test_y = self.construct_train_valid_test_set_from_X_y(
             X, y)
 
-        print(np.count_nonzero(train_y == 0))
-        print(np.count_nonzero(train_y == 1))
+        # No need to oversample since threshold is balanced
+        if self.threshold == 0.0:
+            return train_X, train_y, valid_X, valid_y, test_X, test_y
 
-        return train_X, train_y, valid_X, valid_y, test_X, test_y
-
-        X_flat = train_X.reshape(train_X.shape[0], -1)
-
-        smote = SMOTE()
-        X_train_resampled, y_train_resampled = smote.fit_resample(
-            X_flat, train_y)
-
-        X_train_resampled = X_train_resampled.reshape(
-            X_train_resampled.shape[0], train_X.shape[1], train_X.shape[2])
-
-        return X_train_resampled, y_train_resampled, valid_X, valid_y, test_X, test_y
-
-        # augment negative examples
+        # augment negative examples when threshold is not 0 (thus classification is imbalanced)
         negative_examples_cnt = np.count_nonzero(train_y == 0)
         positive_examples_cnt = np.count_nonzero(train_y == 1)
 
@@ -87,9 +75,6 @@ class binary_constructor(base_constructor):
         train_y = np.concatenate(
             (y_positive_example, y_negative_sample), axis=0)
 
-        print(np.count_nonzero(train_y == 0))
-        print(np.count_nonzero(train_y == 1))
-
         indices = np.arange(len(train_X))
         np.random.shuffle(indices)
         train_X = train_X[indices]
@@ -98,4 +83,7 @@ class binary_constructor(base_constructor):
         return train_X, train_y, valid_X, valid_y, test_X, test_y
 
     def convert_percentage_to_binary_label(self, percentage):
-        return 1 if percentage >= self.threshold else 0
+        if self.threshold >= 0.0:
+            return 1 if percentage >= self.threshold else 0
+        else:
+            return 1 if percentage <= self.threshold else 0

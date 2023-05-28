@@ -73,7 +73,7 @@ def single_shot():
         test_predictions = model(test_X, training=False)
 
         evaluator = BinaryEvaluator(
-            test_y, test_predictions, 0.6)
+            test_y, test_predictions, 0.75)
 
         evaluator.positive_accuracy_score("test")
         evaluator.negative_accuracy_score("test")
