@@ -15,10 +15,10 @@ from training.evaluator.BinaryEvaluator import BinaryEvaluator
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 100
+NUM_EPOCH = 45
 
 BATCH_SIZE = [1024 * 4, 1024 * 8]
-LEARNING_RATE = [1e-3]
+LEARNING_RATE = [1e-3, 1e-2]
 LAG = [10, 15, 30]
 LATENT_DIM = [32, 64, 128]
 THRESHOLD = [-0.01, 0.0, 0.01]
@@ -78,6 +78,8 @@ def grid_search():
         validation_accuracy_hist = []
         train_loss_hist = []
         validation_loss_hist = []
+        train_f1_score_hist = []
+        validation_f1_score_hist = []
         test_accuracy_hist_50 = []
         test_accuracy_hist_60 = []
         test_accuracy_hist_70 = []
@@ -108,7 +110,9 @@ def grid_search():
             train_predictions = model(train_X, training=False)
             evaluator = BinaryEvaluator(train_y, train_predictions, 0.5)
             score, prediction_cnt = evaluator.get_positive_accuracy_score()
+            f1_score = evaluator.get_f1_score()
             train_accuracy_hist.append([epoch, score, prediction_cnt])
+            train_f1_score_hist.append([epoch, f1_score])
 
             # for each epoch, record validation accuracy
             validation_predictions = model(valid_X, training=False)
@@ -116,7 +120,9 @@ def grid_search():
                 valid_y, validation_predictions.numpy().flatten())
             evaluator = BinaryEvaluator(valid_y, validation_predictions, 0.5)
             score, prediction_cnt = evaluator.get_positive_accuracy_score()
+            f1_score = evaluator.get_f1_score()
             validation_accuracy_hist.append([epoch, score, prediction_cnt])
+            validation_f1_score_hist.append([epoch, f1_score])
 
             # for each epoch, record test accuracy with 0.5 threshold
             test_predictions = model(test_X, training=False)
@@ -148,15 +154,19 @@ def grid_search():
         record_results(
             model_results_directory, "validation_accuracy.csv", validation_accuracy_hist, ["epoch", "accuracy", "num_predictions"])
         record_results(
-            model_results_directory, "test_accuracy.csv", test_accuracy_hist_50, ["epoch", "accuracy", "num_predictions"])
+            model_results_directory, "test_accuracy_50.csv", test_accuracy_hist_50, ["epoch", "accuracy", "num_predictions"])
         record_results(
-            model_results_directory, "test_accuracy.csv", test_accuracy_hist_60, ["epoch", "accuracy", "num_predictions"])
+            model_results_directory, "test_accuracy_60.csv", test_accuracy_hist_60, ["epoch", "accuracy", "num_predictions"])
         record_results(
-            model_results_directory, "test_accuracy.csv", test_accuracy_hist_70, ["epoch", "accuracy", "num_predictions"])
+            model_results_directory, "test_accuracy_70.csv", test_accuracy_hist_70, ["epoch", "accuracy", "num_predictions"])
         record_results(
             model_results_directory, "train_loss.csv", train_loss_hist, ["epoch", "loss"])
         record_results(
             model_results_directory, "validation_loss.csv", validation_loss_hist, ["epoch", "loss"])
+        record_results(
+            model_results_directory, "train_f1_score.csv", train_f1_score_hist, ["epoch", "loss"])
+        record_results(
+            model_results_directory, "validation_f1_score.csv", validation_f1_score_hist, ["epoch", "loss"])
 
         _, ax = plt.subplots()
 
@@ -188,6 +198,19 @@ def grid_search():
         ax.plot(x, valid_y, label='validation')
         ax.set_xlabel('epoch')
         ax.set_ylabel('loss')
+        ax.legend()
+        plt.savefig(file_path)
+
+        plt.clf()  # clean the plot for the next result
+        _, ax = plt.subplots()
+        file_path = os.path.join(model_results_directory, "f1_score.png")
+        x = get_data(train_f1_score_hist, 0)  # epoch num
+        train_y = get_data(train_f1_score_hist, 1)
+        valid_y = get_data(validation_f1_score_hist, 1)
+        ax.plot(x, train_y, label='train')
+        ax.plot(x, valid_y, label='validation')
+        ax.set_xlabel('epoch')
+        ax.set_ylabel('f1_score')
         ax.legend()
         plt.savefig(file_path)
 

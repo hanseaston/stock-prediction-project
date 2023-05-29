@@ -15,6 +15,11 @@ class BinaryEvaluator():
             accuracy_score(self.ground_truths, self.predictions))
         print(f"{mode} overall accuracy: {acc}%")
 
+    def get_f1_score(self):
+        score = self._convert_to_accuracy(
+            f1_score(self.ground_truths, self.predictions))
+        return score
+
     def get_positive_accuracy_score(self):
         indices = np.where(self.predictions == 1)[0]
         truths = self.ground_truths[indices]
