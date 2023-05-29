@@ -22,9 +22,9 @@ class BinaryEvaluator():
         try:
             accuracy = self._convert_to_accuracy(accuracy_score(
                 truths, preds))
-            return accuracy
+            return accuracy, len(indices)
         except:
-            return 0.0
+            return 0.0, 0.0
 
     def report_positive_accuracy_score(self, mode):
         indices = np.where(self.predictions == 1)[0]
