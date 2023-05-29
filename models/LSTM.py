@@ -22,6 +22,11 @@ class LSTM(Model):
                                     activation='tanh',
                                     kernel_initializer='glorot_uniform')
 
+        if 'latent_dim' in kwargs:
+            latent_dim = kwargs['latent_dim']
+        else:
+            latent_dim = LATENT_DIM
+
         self.rnn_layer = RNN(LSTMCell(
             units=LATENT_DIM,
             activation='tanh',

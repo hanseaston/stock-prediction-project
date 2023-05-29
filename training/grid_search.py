@@ -15,13 +15,13 @@ from training.evaluator.BinaryEvaluator import BinaryEvaluator
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 45
+NUM_EPOCH = 50
 
-BATCH_SIZE = [1024 * 4, 1024 * 8]
+LAG = [10]
+BATCH_SIZE = [1024 * 8, 1024 * 16]
 LEARNING_RATE = [1e-3, 1e-2]
-LAG = [10, 15, 30]
-LATENT_DIM = [32, 64, 128]
-THRESHOLD = [-0.01, 0.0, 0.01]
+LATENT_DIM = [32, 64]
+THRESHOLD = [-0.02, -0.01, 0.00, 0.01, 0.02]
 #######################################
 
 
@@ -70,7 +70,7 @@ def grid_search():
         # initialize model
         args = {'feature_dim': feature_dum,
                 'output_dim': 1, 'loss_fn': loss_fn, 'latent_dim': latent_dim}
-        model = select_model('AttnLSTM', args)
+        model = select_model('LSTM', args)
         optimizer = tf.keras.optimizers.legacy.Adam(
             learning_rate=learning_rate)
 
