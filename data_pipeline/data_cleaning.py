@@ -6,7 +6,7 @@ from utils.utils import is_approximately_zero
 
 if __name__ == '__main__':
 
-    path = '../raw_data/polygon_processed'
+    path = '../raw_data/polygon_processed_v2'
     zero_count_to_file_names = {}
 
     files_removed = 0
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     for count, filenames in zero_count_to_file_names.items():
         # if there's a lot of zero entries, this means the prive movement is minimal
         # thus not likely a good candidate for the dataset
-        if count >= 100:
+        if count >= 200:
             for filename in filenames:
                 os.remove(filename)
                 files_removed += 1

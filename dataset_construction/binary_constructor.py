@@ -2,18 +2,16 @@ from dataset_construction.base_constructor import base_constructor
 
 import os
 import numpy as np
-from imblearn.over_sampling import SMOTE
 
 
 class binary_constructor(base_constructor):
 
-    def __init__(self, lag, threshold):
-        super().__init__("../raw_data/polygon_processed")
+    def __init__(self, lag, threshold, data_path):
+        super().__init__(data_path)
         self.lag = lag
         self.threshold = threshold
 
-    def construct_model_dataset(self):
-
+    def construct_evaluation_dataset(self):
         X = []
         y = []
 
@@ -41,11 +39,32 @@ class binary_constructor(base_constructor):
         X = np.array(X)
         y = np.array(y)
 
-        # random shuffling by indices
-        indices = np.arange(len(X))
-        np.random.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        return X, y
+
+    def construct_model_dataset(self):
+
+        X = []
+        y = []
+
+        for filename in os.listdir(self.data_source_dir):
+
+            matrix = self.construct_data_matrix(filename)
+
+            n, d = matrix.shape
+
+            self.feature_dimen = d
+
+            # iterating each row for each stock ticker in the processed file
+            for row_num in range(n):
+
+                # if lag exceeds number of entries in the files, ignore
+                if row_num + self.lag + 1 >= n:
+                    break
+
+                percentage_change_after_lag = matrix[row_num + self.lag + 1][3]
+                X.append(matrix[row_num: row_num + self.lag])
+                y.append(self.convert_percentage_to_binary_label(
+                    percentage_change_after_lag))
 
         train_X, train_y, valid_X, valid_y, test_X, test_y = self.construct_train_valid_test_set_from_X_y(
             X, y)

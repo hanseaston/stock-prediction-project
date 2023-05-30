@@ -8,17 +8,15 @@ class BinaryEvaluator():
     def __init__(self, ground_truths, predictions, threshold):
         self.ground_truths = np.array(ground_truths)
         predictions = np.array(predictions)
-        self.predictions = (predictions > threshold).astype(int)
+        if threshold == 493:
+            self.predictions = predictions
+        else:
+            self.predictions = (predictions > threshold).astype(int)
 
     def accuracy_score(self, mode):
         acc = self._convert_to_accuracy(
             accuracy_score(self.ground_truths, self.predictions))
         print(f"{mode} overall accuracy: {acc}%")
-
-    def get_f1_score(self):
-        score = self._convert_to_accuracy(
-            f1_score(self.ground_truths, self.predictions))
-        return score
 
     def get_positive_accuracy_score(self):
         indices = np.where(self.predictions == 1)[0]
@@ -29,6 +27,7 @@ class BinaryEvaluator():
                 truths, preds))
             return accuracy, len(indices)
         except:
+            # if there's no prediction, return 0 instead
             return 0.0, 0.0
 
     def report_positive_accuracy_score(self, mode):
@@ -59,6 +58,11 @@ class BinaryEvaluator():
         accuracy = self._convert_to_accuracy(
             f1_score(self.ground_truths, self.predictions))
         print(f"{mode} F1 score: {accuracy}%")
+
+    def get_f1_score(self):
+        score = self._convert_to_accuracy(
+            f1_score(self.ground_truths, self.predictions))
+        return score
 
     def _convert_to_accuracy(self, prob):
         return np.round(prob * 100, 2)

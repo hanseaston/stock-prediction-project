@@ -1,5 +1,27 @@
 import os
 import tensorflow as tf
+import csv
+
+
+def record_results(model_directory, file_name, data, header, remove_dir=False):
+    file_path = os.path.join(model_directory, file_name)
+    if remove_dir:
+        try:
+            os.rmdir(model_directory)
+        except:
+            pass
+        os.makedirs(model_directory, exist_ok=True)
+    with open(file_path, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(header)
+        writer.writerows(data)
+
+
+def get_data(data_arr, index):
+    y = []
+    for data in data_arr:
+        y.append(data[index])
+    return y
 
 
 def is_approximately_zero(value, tolerance=1e-5):
@@ -11,6 +33,8 @@ def is_approximately_zero(value, tolerance=1e-5):
 
 
 def remove_all_files_from_dir(dir_path):
+    if not os.path.exists(dir_path):
+        return
     files_removed = 0
     for file_name in os.listdir(dir_path):
         file_path = os.path.join(dir_path, file_name)

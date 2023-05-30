@@ -1,4 +1,4 @@
-from models.LSTM import LSTM
+from models.LatentLSTM import LatentLSTM
 from models.AdvAttnLSTM import AdvAttnLSTM
 from models.NeuralNets import NeuralNets
 from models.AttnLSTM import AttnLSTM
@@ -6,7 +6,7 @@ from models.AttnLSTM import AttnLSTM
 
 def select_model(model_name, args):
     if model_name == 'LSTM':
-        return LSTM(**args)
+        return LatentLSTM(**args)
     if model_name == 'AttnLSTM':
         return AttnLSTM(**args)
     if model_name == 'AdvAttnLSTM':

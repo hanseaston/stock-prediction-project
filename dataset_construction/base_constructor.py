@@ -60,6 +60,12 @@ class base_constructor(ABC):
         test_X = X[valid_index:]
         test_y = y[valid_index:]
 
+        # random shuffling by indices only for training set
+        indices = np.arange(len(train_X))
+        np.random.shuffle(indices)
+        train_X = train_X[indices]
+        train_y = train_y[indices]
+
         return train_X, train_y, valid_X, valid_y, test_X, test_y
 
     def validate_dataset(self):

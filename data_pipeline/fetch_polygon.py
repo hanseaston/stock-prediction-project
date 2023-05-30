@@ -39,15 +39,15 @@ class PolygonAPI:
 
 
 class PolygonParser:
-    def __init__(self):
+    def __init__(self, data_base_url):
         self.polygon_api = PolygonAPI()
-        self.data_base_url = "../raw_data/polygon"
+        self.data_base_url = data_base_url
 
     def parse_sp500_tickers(self):
 
         file_path = "../raw_data/s&p_500.csv"
-        date_start = "2021-01-01"
-        date_end = "2023-05-01"
+        date_start = "2014-01-01"
+        date_end = "2019-12-31"
 
         remove_all_files_from_dir(self.data_base_url)
 
@@ -66,7 +66,7 @@ class PolygonParser:
 
         num_ticker_to_fetch = 1000
         date_start = "2020-06-01"
-        date_end = "2023-05-21"
+        date_end = "2019-12-11"
         stock_exchange = "XNYS"
 
         remove_all_files_from_dir(self.data_base_url)
@@ -121,6 +121,7 @@ class PolygonParser:
 
 
 if __name__ == '__main__':
-    polygon_parser = PolygonParser()
+    data_base_url = "../raw_data/polygon_v2"
+    polygon_parser = PolygonParser(data_base_url=data_base_url)
     # polygon_parser.parse_tickers_from_stock_exchange()
     polygon_parser.parse_sp500_tickers()

@@ -12,38 +12,18 @@ from keras.losses import BinaryCrossentropy
 from dataset_construction.binary_constructor import binary_constructor
 from models.ModelSelector import select_model
 from training.evaluator.BinaryEvaluator import BinaryEvaluator
+from utils.utils import get_data, record_results
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 50
+NUM_EPOCH = 25
 
 LAG = [10]
-BATCH_SIZE = [1024 * 8, 1024 * 16]
-LEARNING_RATE = [1e-3, 1e-2]
-LATENT_DIM = [32, 64]
-THRESHOLD = [-0.02, -0.01, 0.00, 0.01, 0.02]
+BATCH_SIZE = [1024 * 16]
+LEARNING_RATE = [1e-2]
+LATENT_DIM = [64]
+THRESHOLD = [-0.01, 0.01]
 #######################################
-
-
-def record_results(model_directory, file_name, data, header, remove_dir=False):
-    file_path = os.path.join(model_directory, file_name)
-    if remove_dir:
-        try:
-            os.rmdir(model_directory)
-        except:
-            pass
-        os.makedirs(model_directory, exist_ok=True)
-    with open(file_path, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(header)
-        writer.writerows(data)
-
-
-def get_data(data_arr, index):
-    y = []
-    for data in data_arr:
-        y.append(data[index])
-    return y
 
 
 def grid_search():
