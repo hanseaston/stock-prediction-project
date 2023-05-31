@@ -2,6 +2,7 @@ from dataset_construction.base_constructor import base_constructor
 
 import os
 import numpy as np
+import csv
 
 
 class binary_constructor(base_constructor):
@@ -11,6 +12,19 @@ class binary_constructor(base_constructor):
         self.lag = lag
         self.threshold = threshold
         self.outlier_threshold = 0.06
+
+    def construct_prediction_dataset(self):
+        X = []
+        for filename in os.listdir(self.data_source_dir):
+            filepath = os.path.join(self.data_source_dir, filename)
+            with open(filepath, 'r') as f:
+                reader = csv.reader(f)
+                next(reader)
+                rows = [row[1:] for row in reader]  # remove date information
+                rows = np.array(rows[-self.lag:])
+                X.append(rows)
+        X = np.array(X).astype(float)
+        return X
 
     def construct_evaluation_dataset(self):
         X = []

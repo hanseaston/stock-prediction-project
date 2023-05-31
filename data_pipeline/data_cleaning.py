@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 
 from utils.utils import is_approximately_zero
 
+
 if __name__ == '__main__':
 
     path = '../raw_data/polygon_processed_v2'
+    path = '../prediction/processed'
     zero_count_to_file_names = {}
 
     files_removed = 0

@@ -60,3 +60,7 @@ def remove_rows_from_matrix(X, arr):
     mask = np.ones(X.shape[0], dtype=bool)  # Create a boolean mask
     mask[arr] = False  # Set indices specified in arr to False
     return X[mask]  # Apply the mask to remove the corresponding rows
+
+
+def get_file_name(file):
+    return file.split('.')[0]
