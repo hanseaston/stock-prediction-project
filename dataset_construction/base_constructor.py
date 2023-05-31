@@ -3,6 +3,8 @@ import numpy as np
 import csv
 import os
 
+from utils.utils import remove_rows_from_matrix
+
 
 class base_constructor(ABC):
 
@@ -80,3 +82,19 @@ class base_constructor(ABC):
                     if current_row >= 30 and self.has_row_data_missing(row):
                         raise KeyError(
                             f'detect missing entries in row for {filename}')
+
+    def remove_outliers(self, X, y, outlier_threshold):
+        X = np.array(X)
+        y = np.array(y)
+        outlier_index = []
+        for i in range(len(X)):
+            x = X[i]
+            outlier = np.any(x[:, 3] >= outlier_threshold) or np.any(
+                x[:, 3] <= outlier_threshold * -1)
+            if outlier:
+                outlier_index.append(i)
+
+        X = remove_rows_from_matrix(X, outlier_index)
+        y = remove_rows_from_matrix(y, outlier_index)
+
+        return X, y

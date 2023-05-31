@@ -11,7 +11,19 @@ def check_invalid_data(attributes):
     return False
 
 
-def process_data(data_path, processed_data_path):
+def preprocess_all_tickers():
+    data_path_base_path = '../raw_data/polygon_v2'
+    processed_data_base_path = '../raw_data/polygon_processed_v2'
+
+    remove_all_files_from_dir(processed_data_base_path)
+
+    for filename in os.listdir(data_path_base_path):
+        data_path = os.path.join(data_path_base_path, filename)
+        processed_data_path = os.path.join(processed_data_base_path, filename)
+        preprocess_single_ticker(data_path, processed_data_path)
+
+
+def preprocess_single_ticker(data_path, processed_data_path):
 
     # the data file to process
     with open(data_path, 'r') as data_file:
@@ -182,4 +194,4 @@ if __name__ == '__main__':
     for filename in os.listdir(data_path_base_path):
         data_path = os.path.join(data_path_base_path, filename)
         processed_data_path = os.path.join(processed_data_base_path, filename)
-        process_data(data_path, processed_data_path)
+        preprocess_single_ticker(data_path, processed_data_path)

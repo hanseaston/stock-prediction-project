@@ -53,27 +53,3 @@ class LatentLSTM(Model):
             reg_loss += tf.nn.l2_loss(train_var)
 
         return self.loss_fn(correct_output, predicted_output) + reg_loss * self.l2_norm_alpha
-
-     # def get_config(self):
-
-    #     config = super().get_config()
-
-    #     config['l2_norm_alpha'] = 1e-3
-
-    #     config['encoding_layer'] = self.encoding_layer = Dense(units=13,
-    #                                                            activation='tanh',
-    #                                                            kernel_initializer='glorot_uniform')
-
-    #     config['rnn_layer'] = RNN(LSTMCell(
-    #         units=64,
-    #         activation='tanh',
-    #         kernel_initializer='glorot_uniform'),
-    #         return_sequences=True)
-
-    #     config['decoding_layer'] = Dense(units=1,
-    #                                      activation='sigmoid',
-    #                                      kernel_initializer='glorot_uniform')
-
-    #     config['loss_fn'] = BinaryCrossentropy(from_logits=False)
-
-    #     return config

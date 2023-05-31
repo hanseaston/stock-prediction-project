@@ -24,12 +24,12 @@ LATENT_DIM = 64
 #######################################
 
 
-def train_single_model(model_name, threshold):
+def train_single_model(model_name, threshold, data_path):
 
     print(f'training {model_name} model...')
 
     dataset_constructor = binary_constructor(
-        lag=LAG, threshold=threshold, data_path="../raw_data/polygon_processed_v2/")
+        lag=LAG, threshold=threshold, data_path=data_path)
     train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
     feature_dim = dataset_constructor.get_feature_dimension()
     train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
@@ -142,39 +142,39 @@ def train_single_model(model_name, threshold):
     ax.legend()
     plt.savefig(file_path)
 
-    # model_dir = os.path.join(model_results_directory, "trained_model")
+    model_dir = os.path.join(model_results_directory, "trained_model")
 
-    # print('Saving model...')
-    # tf.keras.models.save_model(model, model_dir)
-    # print('Done!')
+    print('Saving model...')
+    tf.keras.models.save_model(model, model_dir)
+    print('Done!')
 
     return model
 
 
 def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, negative_threshold_model):
 
+    dataset_constructor = binary_constructor(
+        lag=LAG, threshold=0.0, data_path="../raw_data/polygon_processed/")
+
+    test_X, test_y = dataset_constructor.construct_evaluation_dataset()
+
     # dataset_constructor = binary_constructor(
     #     lag=LAG, threshold=0.0, data_path="../raw_data/polygon_processed_v2/")
 
-    # test_X, test_y = dataset_constructor.construct_evaluation_dataset()
-
-    dataset_constructor = binary_constructor(
-        lag=LAG, threshold=0.0, data_path="../raw_data/polygon_processed_v2/")
-
-    train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
+    # train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
 
     neutral_classifier_predictions = neutral_threshold_model(
         test_X, training=False)
     neutral_classifier_predictions = (
-        np.array(neutral_classifier_predictions) > 0.7).astype(int)
+        np.array(neutral_classifier_predictions) > 0.8).astype(int)
     positive_classifier_predictions = positive_threshold_model(
         test_X, training=False)
     positive_classifier_predictions = (
-        np.array(positive_classifier_predictions) > 0.7).astype(int)
+        np.array(positive_classifier_predictions) > 0.9).astype(int)
     negative_classifier_predictions = negative_threshold_model(
         test_X, training=False)
     negative_classifier_predictions = (
-        np.array(negative_classifier_predictions) > 0.7).astype(int)
+        np.array(negative_classifier_predictions) > 0.9).astype(int)
 
     hybrid_predictions = []
     for i in range(len(neutral_classifier_predictions)):
@@ -192,20 +192,26 @@ def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, neg
 
 
 if __name__ == '__main__':
-    # neutral_threshold_model = train_single_model("neutral", 0.0)
-    positive_threshold_model = train_single_model("positive", 0.01)
-    negative_threshold_model = train_single_model("negative", -0.01)
 
-    # evaluate_hybrid_model(neutral_threshold_model,
-    #                       positive_threshold_model, negative_threshold_model)
+    TRAIN_MODE = True
+    EVALUATION_MODE = True
 
-    # load model
-    # neutral_threshold_model_path = "results/hybrid/neutral/trained_model"
-    # neutral_threshold_model = tf.keras.models.load_model(
-    #     neutral_threshold_model_path)
-    # positive_threshold_model_path = "results/hybrid/positive/trained_model"
-    # positive_threshold_model = tf.keras.models.load_model(
-    #     positive_threshold_model_path)
-    # negative_threshold_model_path = "results/hybrid/negative/trained_model"
-    # negative_threshold_model = tf.keras.models.load_model(
-    #     negative_threshold_model_path)
+    if TRAIN_MODE:
+        model_data_path = "../raw_data/polygon_processed_v2/"
+        # training model
+        train_single_model("neutral", 0.0, model_data_path)
+        train_single_model("positive", 0.01, model_data_path)
+        train_single_model("negative", -0.01, model_data_path)
+
+    if EVALUATION_MODE:
+        neutral_threshold_model_path = "results/hybrid/neutral/trained_model"
+        neutral_threshold_model = tf.keras.models.load_model(
+            neutral_threshold_model_path)
+        positive_threshold_model_path = "results/hybrid/positive/trained_model"
+        positive_threshold_model = tf.keras.models.load_model(
+            positive_threshold_model_path)
+        negative_threshold_model_path = "results/hybrid/negative/trained_model"
+        negative_threshold_model = tf.keras.models.load_model(
+            negative_threshold_model_path)
+        evaluate_hybrid_model(neutral_threshold_model,
+                              positive_threshold_model, negative_threshold_model)

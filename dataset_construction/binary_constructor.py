@@ -10,6 +10,7 @@ class binary_constructor(base_constructor):
         super().__init__(data_path)
         self.lag = lag
         self.threshold = threshold
+        self.outlier_threshold = 0.06
 
     def construct_evaluation_dataset(self):
         X = []
@@ -34,6 +35,8 @@ class binary_constructor(base_constructor):
                 X.append(matrix[row_num: row_num + self.lag])
                 y.append(self.convert_percentage_to_binary_label(
                     percentage_change_after_lag))
+
+        X, y = self.remove_outliers(X, y, self.outlier_threshold)
 
         # initialize into numpy array
         X = np.array(X)
@@ -65,6 +68,8 @@ class binary_constructor(base_constructor):
                 X.append(matrix[row_num: row_num + self.lag])
                 y.append(self.convert_percentage_to_binary_label(
                     percentage_change_after_lag))
+
+        X, y = self.remove_outliers(X, y, self.outlier_threshold)
 
         train_X, train_y, valid_X, valid_y, test_X, test_y = self.construct_train_valid_test_set_from_X_y(
             X, y)

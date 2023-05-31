@@ -43,12 +43,9 @@ class PolygonParser:
         self.polygon_api = PolygonAPI()
         self.data_base_url = data_base_url
 
-    def parse_sp500_tickers(self):
+    def parse_sp500_tickers(self, date_start, date_end):
 
         file_path = "../raw_data/s&p_500.csv"
-        date_start = "2014-01-01"
-        date_end = "2019-12-31"
-
         remove_all_files_from_dir(self.data_base_url)
 
         ticker_symbols = []
@@ -59,7 +56,7 @@ class PolygonParser:
                 ticker_symbols.append(row[0])
 
         for ticker in ticker_symbols:
-            polygon_parser.parse_individual_ticker_within_time_range(
+            self.parse_individual_ticker_within_time_range(
                 ticker, date_start, date_end)
 
     def parse_tickers_from_stock_exchange(self):
@@ -124,4 +121,4 @@ if __name__ == '__main__':
     data_base_url = "../raw_data/polygon_v2"
     polygon_parser = PolygonParser(data_base_url=data_base_url)
     # polygon_parser.parse_tickers_from_stock_exchange()
-    polygon_parser.parse_sp500_tickers()
+    polygon_parser.parse_sp500_tickers("2014-01-01", "2023-05-30")

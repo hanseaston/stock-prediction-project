@@ -1,5 +1,6 @@
 import os
 import tensorflow as tf
+import numpy as np
 import csv
 
 
@@ -53,3 +54,9 @@ def check_all_zeros(lst):
 
 def check_tensor_equal(tensor1, tensor2):
     return tf.reduce_all(tf.equal(tensor1, tensor2))
+
+
+def remove_rows_from_matrix(X, arr):
+    mask = np.ones(X.shape[0], dtype=bool)  # Create a boolean mask
+    mask[arr] = False  # Set indices specified in arr to False
+    return X[mask]  # Apply the mask to remove the corresponding rows
