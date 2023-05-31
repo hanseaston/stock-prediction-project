@@ -19,7 +19,7 @@ lag = 10
 
 def fetch_data():
     parser = PolygonParser(raw_data_path)
-    date_start = "2023-04-01"  # needs more efficien timplementation
+    date_start = "2023-04-01"  # TODO: needs more efficient timplementation
     date_end = datetime.now().strftime("%Y-%m-%d")
     parser.parse_sp500_tickers(date_start, date_end)
 

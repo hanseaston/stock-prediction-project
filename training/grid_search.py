@@ -1,6 +1,5 @@
 
 import os
-import csv
 
 import tensorflow as tf
 from itertools import product
@@ -16,28 +15,30 @@ from utils.utils import get_data, record_results
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 25
+NUM_EPOCH = 10
 
 LAG = [10]
 BATCH_SIZE = [1024 * 16]
 LEARNING_RATE = [1e-2]
 LATENT_DIM = [64]
-THRESHOLD = [-0.01, 0.01]
+THRESHOLD = [0.01, 0, -0.01]
+L2_APHA = [0, 1e-5]
 #######################################
 
 
-def grid_search():
+def grid_search(data_path):
 
     hyperparameter_combinations = product(
-        BATCH_SIZE, LEARNING_RATE, LAG, LATENT_DIM, THRESHOLD)
+        BATCH_SIZE, LEARNING_RATE, LAG, LATENT_DIM, THRESHOLD, L2_APHA)
 
-    for batch_size, learning_rate, lag, latent_dim, threshold in hyperparameter_combinations:
+    for batch_size, learning_rate, lag, latent_dim, threshold, l2_alpha in hyperparameter_combinations:
 
         print(
-            f"Training {batch_size} {learning_rate} {lag} {latent_dim} {threshold}...")
+            f"Training {batch_size} {learning_rate} {lag} {latent_dim} {threshold} {l2_alpha}...")
 
         # initialize dataset
-        dataset_constructor = binary_constructor(lag=lag, threshold=threshold)
+        dataset_constructor = binary_constructor(
+            lag=lag, threshold=threshold, data_path=data_path)
         train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
         feature_dum = dataset_constructor.get_feature_dimension()
         train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
@@ -49,8 +50,8 @@ def grid_search():
 
         # initialize model
         args = {'feature_dim': feature_dum,
-                'output_dim': 1, 'loss_fn': loss_fn, 'latent_dim': latent_dim}
-        model = select_model('LSTM', args)
+                'output_dim': 1, 'loss_fn': loss_fn, 'latent_dim': latent_dim, 'l2_alpha': l2_alpha}
+        model = select_model('AttnLSTM', args)
         optimizer = tf.keras.optimizers.legacy.Adam(
             learning_rate=learning_rate)
 
@@ -73,7 +74,7 @@ def grid_search():
                 with tf.GradientTape() as tape:
 
                     predicted_output = model(
-                        [x_batch_train, y_batch_train], training=True)
+                        x_batch_train, training=True)
 
                     loss_value = model.get_total_loss(
                         y_batch_train, predicted_output)
@@ -125,9 +126,10 @@ def grid_search():
             # for each epoch, record lossed for both train and validation set
             train_loss_hist.append(
                 [epoch, train_loss.numpy() / len(batched_train_dataset)])
-            validation_loss_hist.append([epoch, validation_loss.numpy()])
+            validation_loss_hist.append(
+                [epoch, validation_loss.numpy()])
 
-        model_results_directory = f"results/{batch_size}_{learning_rate}_{lag}_{latent_dim}_{threshold}"
+        model_results_directory = f"results/{batch_size}_{learning_rate}_{lag}_{latent_dim}_{threshold}_{l2_alpha}"
 
         record_results(
             model_results_directory, "train_accuracy.csv", train_accuracy_hist, ["epoch", "accuracy", "num_predictions"], True)
@@ -200,4 +202,5 @@ def grid_search():
 
 
 if __name__ == '__main__':
-    grid_search()
+    data_path = "../raw_data/polygon_processed/"
+    grid_search(data_path)

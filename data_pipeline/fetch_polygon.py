@@ -45,7 +45,7 @@ class PolygonParser:
 
     def parse_sp500_tickers(self, date_start, date_end):
 
-        file_path = "../raw_data/s&p_500.csv"
+        file_path = "../raw_data/sp500.csv"
         remove_all_files_from_dir(self.data_base_url)
 
         ticker_symbols = []
@@ -56,6 +56,42 @@ class PolygonParser:
                 ticker_symbols.append(row[0])
 
         for ticker in ticker_symbols:
+            self.parse_individual_ticker_within_time_range(
+                ticker, date_start, date_end)
+
+    def parse_nasdaq_tickers(self, date_start, date_end):
+
+        nasdaq_path = "../raw_data/nasdaq.csv"
+        remove_all_files_from_dir(self.data_base_url)
+
+        nasdaq_ticker_symbols = []
+        with open(nasdaq_path, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                nasdaq_ticker_symbols.append(row[0])
+
+        EXCLUDE_SP500_SYMBOLS = True
+
+        if EXCLUDE_SP500_SYMBOLS:
+
+            print(
+                f"Originally, there are {len(nasdaq_ticker_symbols)} tickers")
+
+            # remove all stocks from sp500
+            sp500_path = "../raw_data/sp500.csv"
+            sp500_ticker_symbols = []
+            with open(sp500_path, 'r') as file:
+                reader = csv.reader(file)
+                next(reader)
+                for row in reader:
+                    sp500_ticker_symbols.append(row[0])
+            nasdaq_ticker_symbols = [
+                ticker for ticker in nasdaq_ticker_symbols if ticker not in sp500_ticker_symbols]
+
+        print(f"Now, there are {len(nasdaq_ticker_symbols)} tickers")
+
+        for ticker in nasdaq_ticker_symbols:
             self.parse_individual_ticker_within_time_range(
                 ticker, date_start, date_end)
 
@@ -118,7 +154,7 @@ class PolygonParser:
 
 
 if __name__ == '__main__':
-    data_base_url = "../raw_data/polygon_v2"
+    data_base_url = "../raw_data/nasdaq/"
     polygon_parser = PolygonParser(data_base_url=data_base_url)
     # polygon_parser.parse_tickers_from_stock_exchange()
     polygon_parser.parse_sp500_tickers("2014-01-01", "2023-05-30")

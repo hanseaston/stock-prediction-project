@@ -28,6 +28,11 @@ class AttnLSTM(Model):
         else:
             latent_dim = LATENT_DIM
 
+        if 'l2_alpha' in kwargs:
+            self.l2_norm_alpha = kwargs['l2_alpha']
+        else:
+            self.l2_norm_alpha = L2_ALPHA
+
         self.rnn_layer = RNN(LSTMCell(
             units=latent_dim,
             activation='tanh',
@@ -55,9 +60,7 @@ class AttnLSTM(Model):
 
         self.loss_fn = loss_fn
 
-    def call(self, args, training):
-
-        input = args[0] if training else args
+    def call(self, input, training):
 
         encoded_feature = self.encoding_layer(input)
 

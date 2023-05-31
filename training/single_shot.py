@@ -21,6 +21,7 @@ LAG = 10
 BATCH_SIZE = 1024 * 16
 LEARNING_RATE = 1e-2
 LATENT_DIM = 64
+L2_ALPHA = 1e-5
 #######################################
 
 
@@ -41,7 +42,7 @@ def train_single_model(model_name, threshold, data_path):
 
     # initialize model
     args = {'feature_dim': feature_dim,
-            'output_dim': 1, 'loss_fn': loss_fn, 'latent_dim': LATENT_DIM}
+            'output_dim': 1, 'loss_fn': loss_fn, 'latent_dim': LATENT_DIM, 'l2_alpha': L2_ALPHA}
     model = select_model('LSTM', args)
     optimizer = tf.keras.optimizers.legacy.Adam(
         learning_rate=LEARNING_RATE)

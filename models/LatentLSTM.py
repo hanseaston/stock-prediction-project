@@ -14,16 +14,19 @@ class LatentLSTM(Model):
 
         super().__init__()
 
-        self.l2_norm_alpha = L2_ALPHA
-
-        self.encoding_layer = Dense(units=feature_dim,
-                                    activation='tanh',
-                                    kernel_initializer='glorot_uniform')
-
         if 'latent_dim' in kwargs:
             latent_dim = kwargs['latent_dim']
         else:
             latent_dim = LATENT_DIM
+
+        if 'l2_alpha' in kwargs:
+            self.l2_norm_alpha = kwargs['l2_alpha']
+        else:
+            self.l2_norm_alpha = L2_ALPHA
+
+        self.encoding_layer = Dense(units=feature_dim,
+                                    activation='tanh',
+                                    kernel_initializer='glorot_uniform')
 
         self.rnn_layer = RNN(LSTMCell(
             units=latent_dim,
