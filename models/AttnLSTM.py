@@ -7,7 +7,7 @@ from tensorflow import tanh, tensordot, reduce_sum, concat
 
 ######### Model configuration #########
 LATENT_DIM = 32
-L2_ALPHA = 1e-3
+L2_ALPHA = 0
 #######################################
 
 

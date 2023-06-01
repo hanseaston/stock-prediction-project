@@ -18,14 +18,14 @@ BUFFER_SIZE = 128
 NUM_EPOCH = 25
 
 LAG = 10
-BATCH_SIZE = 1024 * 16
+BATCH_SIZE = 1024 * 8
 LEARNING_RATE = 1e-2
 LATENT_DIM = 64
-L2_ALPHA = 1e-5
+L2_ALPHA = 0
 #######################################
 
 
-def train_single_model(model_name, threshold, data_path):
+def train_single_model(dataset_name, model_name, threshold, data_path):
 
     print(f'training {model_name} model...')
 
@@ -43,7 +43,7 @@ def train_single_model(model_name, threshold, data_path):
     # initialize model
     args = {'feature_dim': feature_dim,
             'output_dim': 1, 'loss_fn': loss_fn, 'latent_dim': LATENT_DIM, 'l2_alpha': L2_ALPHA}
-    model = select_model('LSTM', args)
+    model = select_model('AttnLSTM', args)
     optimizer = tf.keras.optimizers.legacy.Adam(
         learning_rate=LEARNING_RATE)
 
@@ -90,17 +90,17 @@ def train_single_model(model_name, threshold, data_path):
         score, prediction_cnt = evaluator.get_positive_accuracy_score()
         validation_accuracy_hist.append([epoch, score, prediction_cnt])
 
-        # for each epoch, record lossed for both train and validation set
+        # for each epoch, record loss for both train and validation set
         train_loss_hist.append(
             [epoch, train_loss.numpy() / len(batched_train_dataset)])
         validation_loss_hist.append([epoch, validation_loss.numpy()])
 
         test_predictions = model(test_X, training=False)
-        evaluator = BinaryEvaluator(test_y, test_predictions, 0.8)
+        evaluator = BinaryEvaluator(test_y, test_predictions, 0.7)
         score, prediction_cnt = evaluator.get_positive_accuracy_score()
         test_accuracy_hist.append([epoch, score, prediction_cnt])
 
-    model_results_directory = f"results/hybrid/{model_name}"
+    model_results_directory = f"results/{dataset_name}/{model_name}"
 
     record_results(
         model_results_directory, "train_accuracy.csv", train_accuracy_hist, ["epoch", "accuracy", "num_predictions"], True)
@@ -152,30 +152,25 @@ def train_single_model(model_name, threshold, data_path):
     return model
 
 
-def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, negative_threshold_model):
+def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, negative_threshold_model, evaluation_dataset_path):
 
     dataset_constructor = binary_constructor(
-        lag=LAG, threshold=0.0, data_path="../raw_data/polygon_processed/")
+        lag=LAG, threshold=0.0, data_path=evaluation_dataset_path)
 
     test_X, test_y = dataset_constructor.construct_evaluation_dataset()
-
-    # dataset_constructor = binary_constructor(
-    #     lag=LAG, threshold=0.0, data_path="../raw_data/polygon_processed_v2/")
-
-    # train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
 
     neutral_classifier_predictions = neutral_threshold_model(
         test_X, training=False)
     neutral_classifier_predictions = (
-        np.array(neutral_classifier_predictions) > 0.8).astype(int)
+        np.array(neutral_classifier_predictions) > 0.7).astype(int)
     positive_classifier_predictions = positive_threshold_model(
         test_X, training=False)
     positive_classifier_predictions = (
-        np.array(positive_classifier_predictions) > 0.9).astype(int)
+        np.array(positive_classifier_predictions) > 0.7).astype(int)
     negative_classifier_predictions = negative_threshold_model(
         test_X, training=False)
     negative_classifier_predictions = (
-        np.array(negative_classifier_predictions) > 0.9).astype(int)
+        np.array(negative_classifier_predictions) > 0.7).astype(int)
 
     hybrid_predictions = []
     for i in range(len(neutral_classifier_predictions)):
@@ -197,22 +192,37 @@ if __name__ == '__main__':
     TRAIN_MODE = True
     EVALUATION_MODE = True
 
+    ### TODO: change this when necessary ###
+    dataset_name = 'nasdaq'
+
     if TRAIN_MODE:
-        model_data_path = "../raw_data/polygon_processed_v2/"
+
+        ### TODO: change this when necessary ###
+        # nasdaq
+        # data_path = '../raw_data/nasdaq_2014_2023_processed'
+
+        ### TODO: change this when necessary ###
+        # sp500
+        data_path = '../raw_data/nasdaq_2014_2023_processed'
+
         # training model
-        train_single_model("neutral", 0.0, model_data_path)
-        train_single_model("positive", 0.01, model_data_path)
-        train_single_model("negative", -0.01, model_data_path)
+        train_single_model(dataset_name, "neutral", 0.0, data_path)
+        train_single_model(dataset_name, "positive", 0.01, data_path)
+        train_single_model(dataset_name, "negative", -0.01, data_path)
 
     if EVALUATION_MODE:
-        neutral_threshold_model_path = "results/hybrid/neutral/trained_model"
+        neutral_threshold_model_path = f"results/{dataset_name}/neutral/trained_model"
         neutral_threshold_model = tf.keras.models.load_model(
             neutral_threshold_model_path)
-        positive_threshold_model_path = "results/hybrid/positive/trained_model"
+        positive_threshold_model_path = f"results/{dataset_name}/positive/trained_model"
         positive_threshold_model = tf.keras.models.load_model(
             positive_threshold_model_path)
-        negative_threshold_model_path = "results/hybrid/negative/trained_model"
+        negative_threshold_model_path = f"results/{dataset_name}/negative/trained_model"
         negative_threshold_model = tf.keras.models.load_model(
             negative_threshold_model_path)
+
+        ### TODO: change this when necessary ###
+        evaluation_dataset_path = '../raw_data/sp500_2014_2023_processed'
+
         evaluate_hybrid_model(neutral_threshold_model,
-                              positive_threshold_model, negative_threshold_model)
+                              positive_threshold_model, negative_threshold_model, evaluation_dataset_path)

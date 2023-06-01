@@ -74,10 +74,6 @@ class PolygonParser:
         EXCLUDE_SP500_SYMBOLS = True
 
         if EXCLUDE_SP500_SYMBOLS:
-
-            print(
-                f"Originally, there are {len(nasdaq_ticker_symbols)} tickers")
-
             # remove all stocks from sp500
             sp500_path = "../raw_data/sp500.csv"
             sp500_ticker_symbols = []
@@ -88,8 +84,6 @@ class PolygonParser:
                     sp500_ticker_symbols.append(row[0])
             nasdaq_ticker_symbols = [
                 ticker for ticker in nasdaq_ticker_symbols if ticker not in sp500_ticker_symbols]
-
-        print(f"Now, there are {len(nasdaq_ticker_symbols)} tickers")
 
         for ticker in nasdaq_ticker_symbols:
             self.parse_individual_ticker_within_time_range(
@@ -154,7 +148,8 @@ class PolygonParser:
 
 
 if __name__ == '__main__':
-    data_base_url = "../raw_data/nasdaq/"
+    ### TODO: change this when necessary ###
+    data_base_url = "../raw_data/nasdaq_2014_2023"
     polygon_parser = PolygonParser(data_base_url=data_base_url)
-    # polygon_parser.parse_tickers_from_stock_exchange()
-    polygon_parser.parse_sp500_tickers("2014-01-01", "2023-05-30")
+    ### TODO: change this when necessary ###
+    polygon_parser.parse_nasdaq_tickers("2014-01-01", "2023-05-30")

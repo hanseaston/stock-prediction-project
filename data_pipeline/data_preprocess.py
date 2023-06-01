@@ -183,6 +183,15 @@ def preprocess_single_ticker(data_path, processed_data_path):
 
 
 if __name__ == '__main__':
-    data_path_base_path = '../raw_data/polygon_v2'
-    processed_data_base_path = '../raw_data/polygon_processed_v2'
+
+    ### TODO: change this when necessary ###
+    # nasdaq
+    data_path_base_path = '../raw_data/nasdaq_2014_2023'
+    processed_data_base_path = '../raw_data/nasdaq_2014_2023_processed'
+
+    ### TODO: change this when necessary ###
+    # sp500
+    # data_path_base_path = '../raw_data/sp500_2014_2023'
+    # processed_data_base_path = '../raw_data/sp500_2014_2023_processed'
+
     preprocess_all_tickers(data_path_base_path, processed_data_base_path)

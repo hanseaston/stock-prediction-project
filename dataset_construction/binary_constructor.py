@@ -83,7 +83,11 @@ class binary_constructor(base_constructor):
                 y.append(self.convert_percentage_to_binary_label(
                     percentage_change_after_lag))
 
+        print('Before removal', len(X))
+
         X, y = self.remove_outliers(X, y, self.outlier_threshold)
+
+        print('After removal', len(X))
 
         train_X, train_y, valid_X, valid_y, test_X, test_y = self.construct_train_valid_test_set_from_X_y(
             X, y)
