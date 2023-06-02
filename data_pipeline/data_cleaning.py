@@ -10,7 +10,12 @@ data_path = '../raw_data/nasdaq_2014_2023_processed'
 
 ### TODO: change this when necessary ###
 # SP500
-# data_path = '../raw_data/sp500_2014_2023_processed'
+# data_path = '../raw_data/sp500_2014_2023_processed
+# '
+
+### TODO: change this when necessary ###
+# making prediction
+data_path = '../prediction/processed'
 
 
 if __name__ == '__main__':
@@ -33,7 +38,7 @@ if __name__ == '__main__':
 
             # if there are less than 200 entries, meaning it is a relatively
             # new stock, exclude from the dataset
-            if row_count < 2000:
+            if row_count < 40:
                 files_removed += 1
                 os.remove(filepath)
 
@@ -58,7 +63,7 @@ if __name__ == '__main__':
     for count, filenames in zero_count_to_file_names.items():
         # if there's a lot of zero entries, this means the prive movement is minimal
         # thus not likely a good candidate for the dataset
-        if count >= 300:
+        if count >= 200:
             for filename in filenames:
                 os.remove(filename)
                 files_removed += 1
