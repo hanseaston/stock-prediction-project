@@ -62,7 +62,7 @@ def preprocess_single_ticker(data_path, processed_data_path):
             volume_30_day_hist = []
             volume_30_day_running_sum = 0.0
 
-            writer.writerow(['date', 'c_open', 'c_high',
+            writer.writerow(['date', 'price', 'c_open', 'c_high',
                             'c_low', 'p_price', 'p_volume',
                              'p_5_SMA', 'vol_5_SMA', 'p_10_SMA',
                              'vol_10_SMA', 'p_20_SMA', 'vol_20_SMA',
@@ -174,7 +174,7 @@ def preprocess_single_ticker(data_path, processed_data_path):
                     volume_30_day_hist.append(volume)
                     volume_30_day_running_sum = volume_30_day_running_sum - earliest_volume + volume
 
-                writer.writerow([date, c_open, c_high, c_low, p_price,
+                writer.writerow([date, close_price, c_open, c_high, c_low, p_price,
                                 p_volume, price_5_day_moving_average,
                                 volume_5_day_moving_average, price_10_day_moving_average,
                                 volume_10_day_moving_average, price_20_day_moving_average,
@@ -186,12 +186,12 @@ if __name__ == '__main__':
 
     ### TODO: change this when necessary ###
     # nasdaq
-    data_path_base_path = '../raw_data/nasdaq_2014_2023'
-    processed_data_base_path = '../raw_data/nasdaq_2014_2023_processed'
+    # data_path_base_path = '../raw_data/nasdaq_2014_2023'
+    # processed_data_base_path = '../raw_data/nasdaq_2014_2023_processed'
 
     ### TODO: change this when necessary ###
     # sp500
-    # data_path_base_path = '../raw_data/sp500_2014_2023'
-    # processed_data_base_path = '../raw_data/sp500_2014_2023_processed'
+    data_path_base_path = '../raw_data/sp500_2014_2023'
+    processed_data_base_path = '../raw_data/sp500_2014_2023_processed'
 
     preprocess_all_tickers(data_path_base_path, processed_data_base_path)

@@ -1,4 +1,5 @@
 import requests
+from tqdm import tqdm
 import datetime
 import csv
 
@@ -55,7 +56,8 @@ class PolygonParser:
             for row in reader:
                 ticker_symbols.append(row[0])
 
-        for ticker in ticker_symbols:
+        for i in tqdm(range(len(ticker_symbols))):
+            ticker = ticker_symbols[i]
             self.parse_individual_ticker_within_time_range(
                 ticker, date_start, date_end)
 
@@ -149,7 +151,7 @@ class PolygonParser:
 
 if __name__ == '__main__':
     ### TODO: change this when necessary ###
-    data_base_url = "../raw_data/nasdaq_2014_2023"
+    data_base_url = "../raw_data/sp500_2014_2023"
     polygon_parser = PolygonParser(data_base_url=data_base_url)
     ### TODO: change this when necessary ###
-    polygon_parser.parse_nasdaq_tickers("2014-01-01", "2023-05-30")
+    polygon_parser.parse_sp500_tickers("2014-01-01", "2023-05-30")

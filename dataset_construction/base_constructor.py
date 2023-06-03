@@ -29,7 +29,7 @@ class base_constructor(ABC):
                 return True
         return False
 
-    def construct_data_matrix(self, filename):
+    def construct_data_matrix(self, filename, remove_non_training_attributes):
         filepath = os.path.join(self.data_source_dir, filename)
         with open(filepath, 'r') as f:
             reader = csv.reader(f)
@@ -37,14 +37,19 @@ class base_constructor(ABC):
             stripped_rows = []
             line_number = 0
             for row in reader:
-                # to remove the date info
-                stripped_row = row[1:]
+                stripped_row = row
+                if remove_non_training_attributes:
+                    # to remove the date and the original closing price
+                    stripped_row = row[2:]
                 # first 30 rows should always have entries missing (due to SMA_30 not having enough data yet)
                 if line_number >= 30:
                     stripped_rows.append(stripped_row)
                 line_number += 1
             matrix = np.array(stripped_rows)
-        return matrix.astype(float)
+        if remove_non_training_attributes:
+            return matrix.astype(float)
+        else:
+            return matrix
 
     def construct_train_valid_test_set_from_X_y(self, X, y):
         X = np.array(X)

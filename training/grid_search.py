@@ -64,6 +64,8 @@ def grid_search(data_path):
         test_accuracy_hist_50 = []
         test_accuracy_hist_60 = []
         test_accuracy_hist_70 = []
+        test_accuracy_hist_80 = []
+        test_accuracy_hist_90 = []
 
         for epoch in tqdm(range(NUM_EPOCH)):
 
@@ -123,7 +125,19 @@ def grid_search(data_path):
             score, prediction_cnt = evaluator.get_positive_accuracy_score()
             test_accuracy_hist_70.append([epoch, score, prediction_cnt])
 
-            # for each epoch, record lossed for both train and validation set
+            # for each epoch, record test accuracy with 0.8 threshold
+            test_predictions = model(test_X, training=False)
+            evaluator = BinaryEvaluator(test_y, test_predictions, 0.8)
+            score, prediction_cnt = evaluator.get_positive_accuracy_score()
+            test_accuracy_hist_80.append([epoch, score, prediction_cnt])
+
+            # for each epoch, record test accuracy with 0.9 threshold
+            test_predictions = model(test_X, training=False)
+            evaluator = BinaryEvaluator(test_y, test_predictions, 0.7)
+            score, prediction_cnt = evaluator.get_positive_accuracy_score()
+            test_accuracy_hist_90.append([epoch, score, prediction_cnt])
+
+            # for each epoch, record losses for both train and validation set
             train_loss_hist.append(
                 [epoch, train_loss.numpy() / len(batched_train_dataset)])
             validation_loss_hist.append(
@@ -142,6 +156,10 @@ def grid_search(data_path):
         record_results(
             model_results_directory, "test_accuracy_70.csv", test_accuracy_hist_70, ["epoch", "accuracy", "num_predictions"])
         record_results(
+            model_results_directory, "test_accuracy_80.csv", test_accuracy_hist_80, ["epoch", "accuracy", "num_predictions"])
+        record_results(
+            model_results_directory, "test_accuracy_90.csv", test_accuracy_hist_90, ["epoch", "accuracy", "num_predictions"])
+        record_results(
             model_results_directory, "train_loss.csv", train_loss_hist, ["epoch", "loss"])
         record_results(
             model_results_directory, "validation_loss.csv", validation_loss_hist, ["epoch", "loss"])
@@ -159,11 +177,15 @@ def grid_search(data_path):
         test_y_50 = get_data(test_accuracy_hist_50, 1)
         test_y_60 = get_data(test_accuracy_hist_60, 1)
         test_y_70 = get_data(test_accuracy_hist_70, 1)
+        test_y_80 = get_data(test_accuracy_hist_80, 1)
+        test_y_90 = get_data(test_accuracy_hist_90, 1)
         ax.plot(x, train_y, label='train')
         ax.plot(x, valid_y, label='validation')
         ax.plot(x, test_y_50, label="test 0.5")
         ax.plot(x, test_y_60, label="test 0.6")
         ax.plot(x, test_y_70, label="test 0.7")
+        ax.plot(x, test_y_80, label="test 0.8")
+        ax.plot(x, test_y_90, label="test 0.9")
         ax.set_xlabel('epoch')
         ax.set_ylabel('accuracy')
         ax.legend()

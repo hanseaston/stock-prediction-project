@@ -15,9 +15,9 @@ from utils.utils import get_data, record_results
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 25
+NUM_EPOCH = 18
 
-LAG = 10
+LAG = 15
 BATCH_SIZE = 1024 * 8
 LEARNING_RATE = 1e-2
 LATENT_DIM = 64
@@ -31,7 +31,8 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
 
     dataset_constructor = binary_constructor(
         lag=LAG, threshold=threshold, data_path=data_path)
-    train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
+    train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset(
+        remove_outliers=False, remove_non_training_attributes=True)
     feature_dim = dataset_constructor.get_feature_dimension()
     train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
     train_dataset = train_dataset.shuffle(BUFFER_SIZE)
@@ -51,7 +52,11 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
     validation_accuracy_hist = []
     train_loss_hist = []
     validation_loss_hist = []
-    test_accuracy_hist = []
+    test_accuracy_hist_50 = []
+    test_accuracy_hist_60 = []
+    test_accuracy_hist_70 = []
+    test_accuracy_hist_80 = []
+    test_accuracy_hist_90 = []
 
     for epoch in tqdm(range(NUM_EPOCH)):
 
@@ -95,10 +100,31 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
             [epoch, train_loss.numpy() / len(batched_train_dataset)])
         validation_loss_hist.append([epoch, validation_loss.numpy()])
 
+        # record test for threshold 0.5
         test_predictions = model(test_X, training=False)
+        evaluator = BinaryEvaluator(test_y, test_predictions, 0.5)
+        score, prediction_cnt = evaluator.get_positive_accuracy_score()
+        test_accuracy_hist_50.append([epoch, score, prediction_cnt])
+
+        # record test for threshold 0.6
+        evaluator = BinaryEvaluator(test_y, test_predictions, 0.6)
+        score, prediction_cnt = evaluator.get_positive_accuracy_score()
+        test_accuracy_hist_60.append([epoch, score, prediction_cnt])
+
+        # record test for threshold 0.7
         evaluator = BinaryEvaluator(test_y, test_predictions, 0.7)
         score, prediction_cnt = evaluator.get_positive_accuracy_score()
-        test_accuracy_hist.append([epoch, score, prediction_cnt])
+        test_accuracy_hist_70.append([epoch, score, prediction_cnt])
+
+        # record test for threshold 0.8
+        evaluator = BinaryEvaluator(test_y, test_predictions, 0.8)
+        score, prediction_cnt = evaluator.get_positive_accuracy_score()
+        test_accuracy_hist_80.append([epoch, score, prediction_cnt])
+
+        # record test for threshold 0.9
+        evaluator = BinaryEvaluator(test_y, test_predictions, 0.9)
+        score, prediction_cnt = evaluator.get_positive_accuracy_score()
+        test_accuracy_hist_90.append([epoch, score, prediction_cnt])
 
     model_results_directory = f"results/{dataset_name}/{model_name}"
 
@@ -107,7 +133,16 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
     record_results(
         model_results_directory, "validation_accuracy.csv", validation_accuracy_hist, ["epoch", "accuracy", "num_predictions"])
     record_results(
-        model_results_directory, "test_accuracy.csv", test_accuracy_hist, ["epoch", "accuracy", "num_predictions"])
+        model_results_directory, "test_accuracy_50.csv", test_accuracy_hist_50, ["epoch", "accuracy", "num_predictions"])
+    record_results(
+        model_results_directory, "test_accuracy_60.csv", test_accuracy_hist_60, ["epoch", "accuracy", "num_predictions"])
+    record_results(
+        model_results_directory, "test_accuracy_70.csv", test_accuracy_hist_70, ["epoch", "accuracy", "num_predictions"])
+    record_results(
+        model_results_directory, "test_accuracy_80.csv", test_accuracy_hist_80, ["epoch", "accuracy", "num_predictions"])
+    record_results(
+        model_results_directory, "test_accuracy_90.csv", test_accuracy_hist_90, ["epoch", "accuracy", "num_predictions"])
+
     record_results(
         model_results_directory, "train_loss.csv", train_loss_hist, ["epoch", "loss"])
     record_results(
@@ -119,11 +154,19 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
     x = get_data(train_accuracy_hist, 0)  # epoch num
     train_y = get_data(train_accuracy_hist, 1)
     valid_y = get_data(validation_accuracy_hist, 1)
-    test_y = get_data(test_accuracy_hist, 1)
+    test_y_50 = get_data(test_accuracy_hist_50, 1)
+    test_y_60 = get_data(test_accuracy_hist_60, 1)
+    test_y_70 = get_data(test_accuracy_hist_70, 1)
+    test_y_80 = get_data(test_accuracy_hist_80, 1)
+    test_y_90 = get_data(test_accuracy_hist_90, 1)
 
     ax.plot(x, train_y, label='train')
     ax.plot(x, valid_y, label='validation')
-    ax.plot(x, test_y, label='test')
+    ax.plot(x, test_y_50, label='test_50')
+    ax.plot(x, test_y_60, label='test_60')
+    ax.plot(x, test_y_70, label='test_70')
+    ax.plot(x, test_y_80, label='test_80')
+    ax.plot(x, test_y_90, label='test_90')
     ax.set_xlabel('epoch')
     ax.set_ylabel('accuracy')
     ax.legend()
@@ -190,10 +233,10 @@ def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, neg
 if __name__ == '__main__':
 
     TRAIN_MODE = True
-    EVALUATION_MODE = True
+    EVALUATION_MODE = False
 
     ### TODO: change this when necessary ###
-    dataset_name = 'nasdaq'
+    dataset_name = 'sp500'
 
     if TRAIN_MODE:
 
@@ -203,7 +246,7 @@ if __name__ == '__main__':
 
         ### TODO: change this when necessary ###
         # sp500
-        data_path = '../raw_data/nasdaq_2014_2023_processed'
+        data_path = '../raw_data/sp500_2014_2023_processed'
 
         # training model
         train_single_model(dataset_name, "neutral", 0.0, data_path)

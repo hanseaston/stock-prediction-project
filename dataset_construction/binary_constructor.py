@@ -58,14 +58,42 @@ class binary_constructor(base_constructor):
 
         return X, y
 
-    def construct_model_dataset(self):
+    def construct_dataset_for_agent(self):
+
+        X = []
+
+        for filename in os.listdir(self.data_source_dir):
+
+            matrix = self.construct_data_matrix(
+                filename, False)
+            n, _ = matrix.shape
+
+            # iterating each row for each stock ticker in the processed file
+            for row_num in range(n):
+
+                # if lag exceeds number of entries in the files, ignore
+                if row_num + self.lag + 1 >= n:
+                    break
+
+                X.append(matrix[row_num: row_num + self.lag])
+
+        X = np.array(X)
+        n = X.shape[0]
+
+        valid_index = int(n * (self.training_ratio + self.validation_ratio))
+        test_X = X[valid_index:]
+
+        return test_X
+
+    def construct_model_dataset(self, remove_outliers, remove_non_training_attributes):
 
         X = []
         y = []
 
         for filename in os.listdir(self.data_source_dir):
 
-            matrix = self.construct_data_matrix(filename)
+            matrix = self.construct_data_matrix(
+                filename, remove_non_training_attributes)
 
             n, d = matrix.shape
 
@@ -83,11 +111,10 @@ class binary_constructor(base_constructor):
                 y.append(self.convert_percentage_to_binary_label(
                     percentage_change_after_lag))
 
-        print('Before removal', len(X))
-
-        X, y = self.remove_outliers(X, y, self.outlier_threshold)
-
-        print('After removal', len(X))
+        if remove_outliers:
+            print('Before removal', len(X))
+            X, y = self.remove_outliers(X, y, self.outlier_threshold)
+            print('After removal', len(X))
 
         train_X, train_y, valid_X, valid_y, test_X, test_y = self.construct_train_valid_test_set_from_X_y(
             X, y)
