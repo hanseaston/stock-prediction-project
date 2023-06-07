@@ -4,6 +4,12 @@ import os
 from utils.utils import is_approximately_zero, remove_all_files_from_dir
 
 
+"""
+This file preprocesses the raw data and extracts useful features out of it and writes to a
+new CSV for each ticker symbol
+"""
+
+
 def check_invalid_data(attributes):
     for attribute in attributes:
         if is_approximately_zero(attribute):

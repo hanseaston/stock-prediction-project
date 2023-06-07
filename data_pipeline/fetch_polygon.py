@@ -7,6 +7,12 @@ from utils.utils import remove_all_files_from_dir
 
 
 class PolygonAPI:
+    """
+    Interacts directly with the polygon API
+    Refer to https://polygon.io/
+    The authorization header is already attached in the code
+    """
+
     def __init__(self):
         self.base_url = 'https://api.polygon.io/'
         self.headers = {
@@ -36,16 +42,25 @@ class PolygonAPI:
             return None
 
     def has_next_url(self, response):
+        """Sometimes the API response contains a next_url attribute that enables users to get more data"""
         return 'next_url' in response
 
 
 class PolygonParser:
+    """
+    Parses the PolygonAPI response
+    """
+
     def __init__(self, data_base_url):
         self.polygon_api = PolygonAPI()
         self.data_base_url = data_base_url
 
     def parse_sp500_tickers(self, date_start, date_end):
+        """
+        Parses the S&P 500 stocks, which is what the model is currently using for training
+        """
 
+        # need this to get the ticker symbols of the stocks
         file_path = "../raw_data/sp500.csv"
         remove_all_files_from_dir(self.data_base_url)
 
@@ -62,6 +77,10 @@ class PolygonParser:
                 ticker, date_start, date_end)
 
     def parse_nasdaq_tickers(self, date_start, date_end):
+        """
+        Currently not using, but the number of stocks are a lot more in NASDAQ
+        than S&P 500
+        """
 
         nasdaq_path = "../raw_data/nasdaq.csv"
         remove_all_files_from_dir(self.data_base_url)
@@ -92,6 +111,9 @@ class PolygonParser:
                 ticker, date_start, date_end)
 
     def parse_tickers_from_stock_exchange(self):
+        """
+        General API to fetch all stocks (not currently using)
+        """
 
         num_ticker_to_fetch = 1000
         date_start = "2020-06-01"
@@ -117,6 +139,10 @@ class PolygonParser:
                 ticker, date_start, date_end)
 
     def parse_individual_ticker_within_time_range(self, ticker, date_start, date_end):
+        """
+        Helper method to fetch stock data for a given stock symbol within a time range.
+        Also writes the fetched file to {self.data_base_url/ticker.csv}
+        """
 
         response = self.polygon_api.fetch(
             f"v2/aggs/ticker/{ticker}/range/1/day/{date_start}/{date_end}?adjusted=true&sort=asc")

@@ -4,18 +4,16 @@ import matplotlib.pyplot as plt
 
 from utils.utils import is_approximately_zero
 
-### TODO: change this when necessary ###
-# NASDAQ
-# data_path = '../raw_data/nasdaq_2014_2023_processed'
-
-### TODO: change this when necessary ###
-# SP500
 data_path = '../raw_data/sp500_2014_2019_processed'
-#
 
-### TODO: change this when necessary ###
-# making prediction
-# data_path = '../prediction/processed'
+
+"""
+Doing some very simple data cleaning... 
+First, remove files that do not have enough entries
+Secondly, if the stock is very inactive (e.x a lot of the percentage change is around
+0%, then remove such files as well).
+The thresholds to determine these conditions are parameters (see main method at the bottom)
+"""
 
 
 def clean_data(minimum_num_entries, maxmimum_zero_movements):

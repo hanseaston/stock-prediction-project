@@ -51,6 +51,7 @@ class base_constructor(ABC):
         else:
             return matrix
 
+    ### NOTE: currently not using this ###
     def construct_train_valid_test_set_from_X_y(self, X, y):
         X = np.array(X)
         y = np.array(y)
