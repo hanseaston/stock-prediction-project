@@ -150,8 +150,6 @@ class PolygonParser:
 
 
 if __name__ == '__main__':
-    ### TODO: change this when necessary ###
-    data_base_url = "../raw_data/sp500_2014_2023"
+    data_base_url = "../raw_data/sp500_2014_2019"
     polygon_parser = PolygonParser(data_base_url=data_base_url)
-    ### TODO: change this when necessary ###
-    polygon_parser.parse_sp500_tickers("2014-01-01", "2023-05-30")
+    polygon_parser.parse_sp500_tickers("2014-01-01", "2019-12-31")

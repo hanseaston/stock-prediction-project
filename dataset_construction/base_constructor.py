@@ -11,8 +11,8 @@ class base_constructor(ABC):
     def __init__(self, data_source_dir):
         self.feature_dimen = None
         self.data_source_dir = data_source_dir
-        self.training_ratio = 0.70
-        self.validation_ratio = 0.15
+        self.training_ratio = 0.80
+        self.validation_ratio = 0.10
 
     @abstractmethod
     def construct_model_dataset(self):

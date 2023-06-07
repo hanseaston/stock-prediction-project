@@ -10,7 +10,7 @@ from utils.utils import is_approximately_zero
 
 ### TODO: change this when necessary ###
 # SP500
-data_path = '../raw_data/sp500_2014_2023_processed'
+data_path = '../raw_data/sp500_2014_2019_processed'
 #
 
 ### TODO: change this when necessary ###

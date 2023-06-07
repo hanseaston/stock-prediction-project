@@ -15,12 +15,12 @@ from utils.utils import get_data, record_results
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 18
+NUM_EPOCH = 20
 
-LAG = 15
+LAG = 10
 BATCH_SIZE = 1024 * 8
 LEARNING_RATE = 1e-2
-LATENT_DIM = 64
+LATENT_DIM = 32
 L2_ALPHA = 0
 #######################################
 
@@ -32,7 +32,7 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
     dataset_constructor = binary_constructor(
         lag=LAG, threshold=threshold, data_path=data_path)
     train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset(
-        remove_outliers=False, remove_non_training_attributes=True)
+        False, True)
     feature_dim = dataset_constructor.get_feature_dimension()
     train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
     train_dataset = train_dataset.shuffle(BUFFER_SIZE)
@@ -84,7 +84,6 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
         train_predictions = model(train_X, training=False)
         evaluator = BinaryEvaluator(train_y, train_predictions, 0.5)
         score, prediction_cnt = evaluator.get_positive_accuracy_score()
-        f1_score = evaluator.get_f1_score()
         train_accuracy_hist.append([epoch, score, prediction_cnt])
 
         # for each epoch, record validation accuracy
@@ -195,7 +194,7 @@ def train_single_model(dataset_name, model_name, threshold, data_path):
     return model
 
 
-def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, negative_threshold_model, evaluation_dataset_path):
+def evaluate_hybrid_model(neutral_threshold_model, evaluation_dataset_path):
 
     dataset_constructor = binary_constructor(
         lag=LAG, threshold=0.0, data_path=evaluation_dataset_path)
@@ -205,22 +204,12 @@ def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, neg
     neutral_classifier_predictions = neutral_threshold_model(
         test_X, training=False)
     neutral_classifier_predictions = (
-        np.array(neutral_classifier_predictions) > 0.7).astype(int)
-    positive_classifier_predictions = positive_threshold_model(
-        test_X, training=False)
-    positive_classifier_predictions = (
-        np.array(positive_classifier_predictions) > 0.7).astype(int)
-    negative_classifier_predictions = negative_threshold_model(
-        test_X, training=False)
-    negative_classifier_predictions = (
-        np.array(negative_classifier_predictions) > 0.7).astype(int)
+        np.array(neutral_classifier_predictions) > 0.9).astype(int)
 
     hybrid_predictions = []
     for i in range(len(neutral_classifier_predictions)):
         neu = neutral_classifier_predictions[i]
-        pos = positive_classifier_predictions[i]
-        neg = negative_classifier_predictions[i]
-        if neu == 1 and pos == 1 and neg == 0:
+        if neu == 1:
             hybrid_predictions.append(1)
         else:
             hybrid_predictions.append(0)
@@ -233,39 +222,21 @@ def evaluate_hybrid_model(neutral_threshold_model, positive_threshold_model, neg
 if __name__ == '__main__':
 
     TRAIN_MODE = True
-    EVALUATION_MODE = False
+    EVALUATION_MODE = True
 
-    ### TODO: change this when necessary ###
     dataset_name = 'sp500'
 
     if TRAIN_MODE:
 
-        ### TODO: change this when necessary ###
-        # nasdaq
-        # data_path = '../raw_data/nasdaq_2014_2023_processed'
-
-        ### TODO: change this when necessary ###
-        # sp500
         data_path = '../raw_data/sp500_2014_2023_processed'
-
-        # training model
-        train_single_model(dataset_name, "neutral", 0.0, data_path)
-        train_single_model(dataset_name, "positive", 0.01, data_path)
-        train_single_model(dataset_name, "negative", -0.01, data_path)
+        train_single_model(dataset_name, "neutral", 0, data_path)
 
     if EVALUATION_MODE:
         neutral_threshold_model_path = f"results/{dataset_name}/neutral/trained_model"
         neutral_threshold_model = tf.keras.models.load_model(
             neutral_threshold_model_path)
-        positive_threshold_model_path = f"results/{dataset_name}/positive/trained_model"
-        positive_threshold_model = tf.keras.models.load_model(
-            positive_threshold_model_path)
-        negative_threshold_model_path = f"results/{dataset_name}/negative/trained_model"
-        negative_threshold_model = tf.keras.models.load_model(
-            negative_threshold_model_path)
 
         ### TODO: change this when necessary ###
-        evaluation_dataset_path = '../raw_data/sp500_2014_2023_processed'
+        evaluation_dataset_path = '../raw_data/sp500_2021_2023_processed'
 
-        evaluate_hybrid_model(neutral_threshold_model,
-                              positive_threshold_model, negative_threshold_model, evaluation_dataset_path)
+        evaluate_hybrid_model(neutral_threshold_model, evaluation_dataset_path)

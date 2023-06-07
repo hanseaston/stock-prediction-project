@@ -15,14 +15,14 @@ from utils.utils import get_data, record_results
 
 ######### Training configuration #########
 BUFFER_SIZE = 128
-NUM_EPOCH = 10
+NUM_EPOCH = 12
 
-LAG = [10]
+LAG = [20]
 BATCH_SIZE = [1024 * 16]
 LEARNING_RATE = [1e-2]
-LATENT_DIM = [64]
-THRESHOLD = [0.01, 0, -0.01]
-L2_APHA = [0, 1e-5]
+LATENT_DIM = [32]
+THRESHOLD = [0]
+L2_APHA = [1e-4]
 #######################################
 
 
@@ -39,7 +39,7 @@ def grid_search(data_path):
         # initialize dataset
         dataset_constructor = binary_constructor(
             lag=lag, threshold=threshold, data_path=data_path)
-        train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset()
+        train_X, train_y, valid_X, valid_y, test_X, test_y = dataset_constructor.construct_model_dataset_v2()
         feature_dum = dataset_constructor.get_feature_dimension()
         train_dataset = tf.data.Dataset.from_tensor_slices((train_X, train_y))
         train_dataset = train_dataset.shuffle(BUFFER_SIZE)
@@ -224,5 +224,5 @@ def grid_search(data_path):
 
 
 if __name__ == '__main__':
-    data_path = "../raw_data/polygon_processed/"
+    data_path = "../raw_data/sp500_2014_2023_processed"
     grid_search(data_path)
