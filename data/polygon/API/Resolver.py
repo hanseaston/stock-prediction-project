@@ -17,14 +17,7 @@ class PolygonAPIResolver:
 
         sp500_symbols = get_ticker_names(PATHS['sp500_ticker_symbols'])
 
-        year_start = convert_date_to_yr(date_start)
-        year_end = convert_date_to_yr(date_end)
-
-        sp500_raw_data_path = os.path.join(
-            PATHS['polygon_dataset_raw'], f'sp500_{year_start}_{year_end}')
-
-        os.makedirs(sp500_raw_data_path, exist_ok=True)
-        remove_all_files_from_dir(sp500_raw_data_path)
+        sp500_raw_data_path = PATHS['polygon_dataset_sp500_raw']
 
         for i in tqdm(range(len(sp500_symbols))):
 
