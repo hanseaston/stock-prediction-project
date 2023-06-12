@@ -2,6 +2,11 @@ import os
 import tensorflow as tf
 import numpy as np
 import csv
+from datetime import datetime
+
+
+def convert_date_to_yr(datestring):
+    return datetime.strptime(datestring, "%Y-%m-%d").year
 
 
 def record_results(model_directory, file_name, data, header, remove_dir=False):
