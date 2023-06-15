@@ -1,16 +1,16 @@
-def PrevDayChange(df, base, target, period):
+def SMAP(df, base, target, period):
     """
-    Function to compute the ratio of change from the previous trading day
+    Function to compute Simple Moving Average Percentage (SMAP)
 
     Args :
         df : Pandas DataFrame
         base : String indicating the column name from which the SMA needs to be computed from
         target : String indicates the column name to which the computed data needs to be stored
-        period : Integer indicates the number of days to look back on during percentage calculation
+        period : Integer indicates the period of computation in terms of number of candles
 
     Returns :
         df : Pandas DataFrame with new column added with name 'target'
     """
     if target not in df.columns:
-        df[target] = df[base] / df[base].shift(period) - 1
+        df[target] = (df[base] / df[base].rolling(window=period).mean()) - 1
     return df
