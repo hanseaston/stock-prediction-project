@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from config import PATHS
+from config import get_raw_dataset_path_from_name, get_processed_dataset_path_from_name
 
 from data.polygon.processor.indicators.SMA import SMA
 from data.polygon.processor.generators.AttributeRatio import AttributeRatio
@@ -12,9 +12,9 @@ from utils.utils import remove_all_files_from_dir
 
 class PolygonDataProcessor:
     def __init__(self, dataset_name):
-        self.raw_dataset_path = self.get_raw_dataset_path_from_name(
+        self.raw_dataset_path = get_raw_dataset_path_from_name(
             dataset_name)
-        self.processed_dataset_path = self.get_processed_dataset_path_from_name(
+        self.processed_dataset_path = get_processed_dataset_path_from_name(
             dataset_name)
         remove_all_files_from_dir(self.processed_dataset_path)
 
@@ -101,15 +101,3 @@ class PolygonDataProcessor:
     def L30_TV_SMA_R(self, data):
         self.L30_TV_SMA(data)
         AttributeRatio(data, 'volume', 'L30_TV_SMA', 'L30_TV_SMA_R')
-
-    def get_raw_dataset_path_from_name(self, dataset_name):
-        if dataset_name == 'sp500':
-            return PATHS['polygon_dataset_sp500_raw']
-        elif dataset_name == 'nasdaq':
-            return PATHS['polygon_dataset_nasdaq_raw']
-
-    def get_processed_dataset_path_from_name(self, dataset_name):
-        if dataset_name == 'sp500':
-            return PATHS['polygon_dataset_sp500_processed']
-        elif dataset_name == 'nasdaq':
-            return PATHS['polygon_dataset_nasdaq_processed']

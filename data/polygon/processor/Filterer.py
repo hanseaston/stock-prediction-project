@@ -1,14 +1,14 @@
 import os
 import pandas as pd
 
-from config import PATHS
+from config import get_processed_dataset_path_from_name
 
 from utils.utils import get_file_name
 
 
 class PolygonDataFilterer:
     def __init__(self, dataset_name):
-        self.processed_dataset_path = self.get_processed_dataset_path_from_name(
+        self.processed_dataset_path = get_processed_dataset_path_from_name(
             dataset_name)
 
     def filter_data_by_num_entries(self):
@@ -32,9 +32,3 @@ class PolygonDataFilterer:
                 files_removed.add(get_file_name(file_name))
         print(
             f"Total number of stocks removed: {len(files_removed)}. The removed tickers are {files_removed}")
-
-    def get_processed_dataset_path_from_name(self, dataset_name):
-        if dataset_name == 'sp500':
-            return PATHS['polygon_dataset_sp500_processed']
-        elif dataset_name == 'nasdaq':
-            return PATHS['polygon_dataset_nasdaq_processed']

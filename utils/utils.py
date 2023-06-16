@@ -69,3 +69,11 @@ def remove_rows_from_matrix(X, arr):
 
 def get_file_name(file):
     return file.split('.')[0]
+
+
+def empty_np_matrix():
+    return np.empty((0, ))
+
+
+def empty_np_array():
+    return np.empty(0)

@@ -9,4 +9,34 @@ PATHS = {
     'polygon_dataset_nasdaq_raw': os.path.join(ROOT_DIR, 'data', 'polygon', 'dataset', 'raw', 'nasdaq'),
     'polygon_dataset_sp500_processed': os.path.join(ROOT_DIR, 'data', 'polygon', 'dataset', 'processed', 'sp500'),
     'polygon_dataset_nasdaq_processed': os.path.join(ROOT_DIR, 'data', 'polygon', 'dataset', 'processed', 'nasdaq'),
+    'polygon_dataset_sp500_ml': os.path.join(ROOT_DIR, 'data', 'polygon', 'dataset', 'ml', 'sp500'),
+    'polygon_dataset_nasdaq_ml': os.path.join(ROOT_DIR, 'data', 'polygon', 'dataset', 'ml', 'nasdaq'),
 }
+
+
+def get_tickers_path_from_name(dataset_name):
+    if dataset_name == 'sp500':
+        return PATHS['sp500_ticker_symbols']
+    elif dataset_name == 'nasdaq':
+        return PATHS['nasdaq_ticker_symbols']
+
+
+def get_raw_dataset_path_from_name(dataset_name):
+    if dataset_name == 'sp500':
+        return PATHS['polygon_dataset_sp500_raw']
+    elif dataset_name == 'nasdaq':
+        return PATHS['polygon_dataset_nasdaq_raw']
+
+
+def get_processed_dataset_path_from_name(dataset_name):
+    if dataset_name == 'sp500':
+        return PATHS['polygon_dataset_sp500_processed']
+    elif dataset_name == 'nasdaq':
+        return PATHS['polygon_dataset_nasdaq_processed']
+
+
+def get_ml_dataset_path_from_name(dataset_name):
+    if dataset_name == 'sp500':
+        return PATHS['polygon_dataset_sp500_ml']
+    elif dataset_name == 'nasdaq':
+        return PATHS['polygon_dataset_nasdaq_ml']

@@ -21,7 +21,7 @@ class PolygonAPIFetcher:
 
         if response is None or 'results' not in response:
             print('Response or the result is not defined', response)
-            raise PolygonAPIError()
+            return None
 
         ticker_history = response['results']
         ticker_data = []

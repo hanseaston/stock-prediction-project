@@ -2,11 +2,10 @@ from tqdm import tqdm
 import csv
 import os
 
-from config import PATHS
-
-from utils.utils import remove_all_files_from_dir, convert_date_to_yr
-from data.polygon.API.Fetcher import PolygonAPIFetcher
+from config import get_tickers_path_from_name, get_raw_dataset_path_from_name
 from data.tickers.GetTickerNames import get_ticker_names
+
+from data.polygon.API.Fetcher import PolygonAPIFetcher
 
 
 class PolygonAPIResolver:
@@ -15,9 +14,9 @@ class PolygonAPIResolver:
 
     def resolve_sp500_dataset(self, date_start, date_end):
 
-        sp500_symbols = get_ticker_names(PATHS['sp500_ticker_symbols'])
+        sp500_symbols = get_ticker_names(get_tickers_path_from_name('sp500'))
 
-        sp500_raw_data_path = PATHS['polygon_dataset_sp500_raw']
+        sp500_raw_data_path = get_raw_dataset_path_from_name('sp500')
 
         for i in tqdm(range(len(sp500_symbols))):
 
@@ -31,4 +30,5 @@ class PolygonAPIResolver:
                                  'lowest_price', 'highest_price', 'volume'])
                 ticker_data = self.polygon_fetcher.fetch_data_in_range(
                     ticker_name, date_start, date_end)
-                writer.writerows(ticker_data)
+                if ticker_data is not None:
+                    writer.writerows(ticker_data)

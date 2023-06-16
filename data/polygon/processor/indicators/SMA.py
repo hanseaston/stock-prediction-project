@@ -11,6 +11,5 @@ def SMA(df, base, target, period):
     Returns :
         df : Pandas DataFrame with new column added with name 'target'
     """
-    if target not in df.columns:
-        df[target] = df[base].rolling(window=period).mean()
+    df[target] = df[base].rolling(window=period).mean()
     return df
