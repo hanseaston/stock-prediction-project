@@ -1,2 +1,2 @@
 __pycache__/
-data/polygon/dataset/*
+data/polygon/dataset/**/*.csv
