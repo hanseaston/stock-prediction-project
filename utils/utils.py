@@ -71,6 +71,10 @@ def get_file_name(file):
     return file.split('.')[0]
 
 
+def is_csv(file):
+    return file.split('.')[1] == 'csv'
+
+
 def empty_np_matrix():
     return np.empty((0, ))
 

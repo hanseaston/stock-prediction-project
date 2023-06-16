@@ -7,10 +7,15 @@ from data.polygon.processor.indicators.SMA import SMA
 from data.polygon.processor.generators.AttributeRatio import AttributeRatio
 from data.polygon.processor.generators.LagRatio import LagRatio
 
-from utils.utils import remove_all_files_from_dir
+from utils.utils import remove_all_files_from_dir, is_csv
 
 
 class PolygonDataProcessor:
+    """
+    Takes in the raw ticker data and processes the data using indicators and generators.
+    Finally, writes the processed ticker data into a new file
+    """
+
     def __init__(self, dataset_name):
         self.raw_dataset_path = get_raw_dataset_path_from_name(
             dataset_name)
@@ -20,20 +25,35 @@ class PolygonDataProcessor:
 
     def process_data(self):
         for file_name in os.listdir(self.raw_dataset_path):
+
+            if not is_csv(file_name):
+                continue
+
             raw_file_path = os.path.join(self.raw_dataset_path, file_name)
             processed_file_path = os.path.join(
                 self.processed_dataset_path, file_name)
             data = pd.read_csv(raw_file_path)
+            # ratio of today's closing price and yesterdays' closing price
             self.L1_CP_R(data)
+            # ratio of today's closing price and today's highest price
             self.CP_HP_R(data)
+            # ratio of today's closing price and today's lowest price
             self.CP_LP_R(data)
+            # ratio of today's closing price and 5 day SMA
             self.L5_CP_SMA_R(data)
+            # ratio of today's closing price and 10 day SMA
             self.L10_CP_SMA_R(data)
+            # ratio of today's closing price and 20 day SMA
             self.L20_CP_SMA_R(data)
+            # ratio of today's closing price and 30 day SMA
             self.L30_CP_SMA_R(data)
+            # ratio of today's tradying volume and 5 day SMA
             self.L5_TV_SMA_R(data)
+            # ratio of today's tradying volume and 10 day SMA
             self.L10_TV_SMA_R(data)
+            # ratio of today's tradying volume and 20 day SMA
             self.L20_TV_SMA_R(data)
+            # ratio of today's tradying volume and 30 day SMA
             self.L30_TV_SMA_R(data)
             data.to_csv(processed_file_path, index=False)
 

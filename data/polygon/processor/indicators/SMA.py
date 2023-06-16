@@ -3,10 +3,10 @@ def SMA(df, base, target, period):
     Function to compute Simple Moving Average (SMA)
 
     Args :
-        df : Pandas DataFrame
-        base : String indicating the column name from which the SMA needs to be computed from
-        target : String indicates the column name to which the computed data needs to be stored
-        period : Integer indicates the period of computation in terms of number of candles
+        df : pandas dataframe
+        base : the column name from which the ratio needs to be computed
+        target : the column name to which the computed data needs to be stored
+        period : number of trading timeframe to calculate the SMA over
 
     Returns :
         df : Pandas DataFrame with new column added with name 'target'
