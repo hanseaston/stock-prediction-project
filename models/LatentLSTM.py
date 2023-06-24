@@ -2,27 +2,12 @@ import tensorflow as tf
 from keras.layers import Dense, RNN, LSTMCell
 from keras.models import Model
 
-######### Model configuration #########
-LATENT_DIM = 32
-L2_ALPHA = 0
-#######################################
-
 
 class LatentLSTM(Model):
 
-    def __init__(self, feature_dim, output_dim, loss_fn, **kwargs):
+    def __init__(self, feature_dim, output_dim, loss_fn, latent_dim, l2_alpha, **kwargs):
 
         super().__init__()
-
-        if 'latent_dim' in kwargs:
-            latent_dim = kwargs['latent_dim']
-        else:
-            latent_dim = LATENT_DIM
-
-        if 'l2_alpha' in kwargs:
-            self.l2_norm_alpha = kwargs['l2_alpha']
-        else:
-            self.l2_norm_alpha = L2_ALPHA
 
         self.encoding_layer = Dense(units=feature_dim,
                                     activation='tanh',
@@ -39,8 +24,9 @@ class LatentLSTM(Model):
                                     kernel_initializer='glorot_uniform')
 
         self.loss_fn = loss_fn
+        self.l2_alpha = l2_alpha
 
-    def call(self, input, training):
+    def call(self, input):
 
         encoded_feature = self.encoding_layer(input)
 
@@ -54,5 +40,18 @@ class LatentLSTM(Model):
         reg_loss = 0
         for train_var in self.trainable_variables:
             reg_loss += tf.nn.l2_loss(train_var)
+        return self.loss_fn(correct_output, predicted_output) + reg_loss * self.l2_alpha
 
-        return self.loss_fn(correct_output, predicted_output) + reg_loss * self.l2_norm_alpha
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'feature_dim': self.encoding_layer.units,
+            'output_dim': self.decoding_layer.units,
+            'loss_fn': tf.keras.losses.serialize(self.loss_fn),
+            'latent_dim': self.rnn_layer.cell.units,
+            'l2_alpha': self.l2_alpha,
+            'encoding_layer_config': self.encoding_layer.get_config(),
+            'decoding_layer_config': self.decoding_layer.get_config(),
+            'rnn_layer_config': self.rnn_layer.get_config()
+        })
+        return config

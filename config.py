@@ -14,6 +14,10 @@ PATHS = {
 }
 
 
+def get_trained_model_path_from_version(version_num, epoch_num):
+    return os.path.join(ROOT_DIR, 'training', version_num, 'trained_models', f'{epoch_num}')
+
+
 def get_tickers_path_from_name(dataset_name):
     if dataset_name == 'sp500':
         return PATHS['sp500_ticker_symbols']
