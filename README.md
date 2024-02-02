@@ -7,7 +7,7 @@ down in the following trading days. Asset management companies and investment ba
 increasing their research funding into artificial intelligence, particularly focusing on deep learning models,
 since higher model accuracies often mean increased
 profitability. Additionally, trained deep learning
-models can serve as the backend for automated trading bots, capable to make real-time trading decisions
+models can serve as the backend for automated trading bots, capable to make real-time trading decisions.
 
 The goal of this research project is to benchmark
 the performance of recently developed deep learning
